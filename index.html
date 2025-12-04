@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Autokirim V28 (Excel & Manifest)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        [x-cloak] { display: none !important; }
+
+        /* KAMERA & VISUAL */
+        #reader { width: 100%; height: 100%; background: #000; border-radius: 12px; overflow: hidden; }
+        #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .scan-box { width: 70%; height: 60%; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.3); position: relative; transition: all 0.2s; }
+        .laser { position: absolute; left: 5%; width: 90%; height: 2px; background: #ef4444; box-shadow: 0 0 10px #ef4444; top: 50%; animation: laserAnim 2s infinite ease-in-out; }
+        @keyframes laserAnim { 0% { transform: translateY(-40px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(40px); opacity: 0; } }
+        
+        .flash-success .scan-box { border: 6px solid #22c55e !important; }
+        .flash-error .scan-box { border: 6px solid #dc2626 !important; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .modal-enter { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .disabled-zone { opacity: 0.5; filter: grayscale(100%); pointer-events: none; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen md:h-screen md:overflow-hidden" x-data="appData()" x-init="initApp()">
+
+    <div x-show="!isLoggedIn" class="fixed inset-0 z-50 bg-gradient-to-br from-red-900 to-gray-900 flex items-center justify-center p-4" x-transition.opacity>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center modal-enter">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 shadow-inner">
+                <i class="fas fa-lock text-3xl"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-gray-800 mb-1">AUTOKIRIM V28</h1>
+            <p class="text-sm text-gray-500 mb-6">Login Akses</p>
+            <form @submit.prevent="doLogin">
+                <input type="password" x-model="loginPass" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold text-center text-lg outline-none focus:border-red-500 mb-4" placeholder="Password" autofocus>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold shadow-lg">MASUK</button>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="isLoggedIn" class="flex flex-col md:flex-row w-full md:h-full" x-cloak>
+
+        <header class="md:hidden bg-red-700 text-white p-3 shadow-md flex justify-between items-center z-30 relative shrink-0">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-shield-alt text-yellow-400"></i>
+                <h1 class="font-bold text-sm">AUTOKIRIM PRO</h1>
+            </div>
+            <button @click="logout()" class="text-xs bg-red-800 px-3 py-1 rounded border border-red-600"><i class="fas fa-sign-out-alt"></i></button>
+        </header>
+
+        <aside class="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col z-20 shadow-xl shrink-0 h-auto md:h-full">
+            <div class="hidden md:flex h-16 bg-red-700 text-white items-center px-6 justify-between shrink-0">
+                <div class="flex items-center gap-2 text-xl font-bold"><i class="fas fa-shield-alt text-yellow-400"></i> AUTOKIRIM</div>
+                <button @click="logout()" class="text-xs bg-red-800 px-3 py-1 rounded">Keluar</button>
+            </div>
+
+            <div class="md:flex-1 md:overflow-y-auto p-4 space-y-4">
+                <div class="bg-gray-900 text-white p-3 rounded-xl shadow-lg border border-gray-700 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-yellow-400 text-lg"><i class="fas fa-robot"></i></div>
+                        <div><p class="font-bold text-sm">AI Auto-Detect</p><p class="text-[10px] text-gray-400" x-text="autoDetect ? 'ON' : 'OFF'"></p></div>
+                    </div>
+                    <input type="checkbox" x-model="autoDetect" class="w-5 h-5 accent-green-500 cursor-pointer"/>
+                </div>
+
+                <div class="bg-red-50 p-3 rounded-xl border border-red-100" :class="autoDetect ? 'disabled-zone' : ''">
+                    <label class="text-[10px] font-bold text-red-500 uppercase mb-2 block">Pengaturan Manual</label>
+                    <div class="flex gap-2 overflow-x-auto hide-scroll mb-2 pb-1">
+                        <template x-for="mp in marketplaces" :key="mp.name">
+                            <button @click="selectedMp = mp.name" class="whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold border transition flex items-center gap-2 shrink-0" 
+                                :class="selectedMp === mp.name ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-500 border-gray-200'">
+                                <i class="fas" :class="mp.icon"></i> <span x-text="mp.name"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div x-show="selectedMp === 'Manual'" x-transition class="bg-white p-2 rounded-lg border border-red-100 mb-2">
+                        <div class="flex gap-2">
+                            <button @click="isCODInput = true" class="flex-1 py-1.5 rounded text-xs font-bold transition border" :class="isCODInput ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 text-gray-400 border-gray-200'">COD</button>
+                            <button @click="isCODInput = false" class="flex-1 py-1.5 rounded text-xs font-bold transition border" :class="!isCODInput ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-400 border-gray-200'">Non-COD</button>
+                        </div>
+                    </div>
+
+                    <select x-model="selectedCourier" class="w-full bg-white border-2 border-red-100 text-gray-800 text-sm font-bold rounded-xl p-2.5 outline-none">
+                        <template x-for="c in couriers" :key="c"><option :value="c" x-text="c"></option></template>
+                    </select>
+                </div>
+
+                <div class="bg-gray-900 p-1 rounded-xl shadow-lg relative group overflow-hidden">
+                    <div class="relative w-full h-48 md:h-56 bg-black rounded-lg overflow-hidden" :class="scanStatusClass">
+                        <div x-show="!isCameraActive" @click="toggleCamera()" class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-gray-500 z-10">
+                            <div class="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center mb-2"><i class="fas fa-camera text-2xl"></i></div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Ketuk untuk Scan</span>
+                        </div>
+                        <div id="reader" x-show="isCameraActive"></div>
+                        <div x-show="isCameraActive" class="scan-overlay"><div class="scan-box"><div class="laser"></div></div></div>
+                    </div>
+                    <button @click="toggleCamera()" class="absolute bottom-3 right-3 w-10 h-10 rounded-full flex items-center justify-center shadow-lg bg-white/20 text-white z-20"><i class="fas" :class="isCameraActive ? 'fa-stop' : 'fa-play'"></i></button>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="barcodeInput" x-model="barcodeInput" @keydown.enter="preProcessScan()" class="w-full bg-white border-2 border-gray-200 text-gray-900 text-sm font-bold rounded-xl p-3 outline-none focus:border-red-500 uppercase font-mono" placeholder="KETIK RESI..." autocomplete="off">
+                    <button @click="preProcessScan()" class="bg-red-600 text-white px-4 rounded-xl"><i class="fas fa-arrow-right"></i></button>
+                </div>
+
+                <div class="pt-2">
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <button @click="showPrintModal = true" class="bg-gray-800 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-print text-yellow-400"></i> CETAK MANIFEST
+                        </button>
+                        <button @click="exportExcel()" class="bg-green-600 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                            <i class="fas fa-file-excel"></i> EXPORT EXCEL
+                        </button>
+                    </div>
+                    
+                    <button @click="shareToWA()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold shadow-md mb-2 flex items-center justify-center gap-2">
+                        <i class="fab fa-whatsapp text-lg"></i> SHARE LAPORAN WA
+                    </button>
+
+                    <div class="flex justify-between gap-2 mt-4 border-t pt-2">
+                        <button @click="backupData()" class="text-gray-500 text-xs hover:text-gray-800"><i class="fas fa-download"></i> Backup Data</button>
+                        <button @click="resetData()" class="text-red-300 text-xs hover:text-red-600"><i class="fas fa-trash"></i> Reset Data</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 bg-white flex flex-col relative md:overflow-hidden">
+            
+            <div class="bg-white border-b sticky top-0 z-40 shadow-sm">
+                <div class="flex items-center gap-3 px-4 py-2 overflow-x-auto hide-scroll bg-gray-50 border-b">
+                    <div class="flex items-center gap-2 px-3 py-1 bg-gray-800 text-white rounded-full shrink-0">
+                        <span class="text-[10px] font-bold">TOTAL:</span><span class="text-xs font-bold" x-text="filteredData.length"></span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full shrink-0">
+                        <span class="text-[10px] font-bold">COD:</span><span class="text-xs font-bold" x-text="formatRupiah(totalCOD)"></span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full shrink-0">
+                        <span class="text-[10px] font-bold">NON:</span><span class="text-xs font-bold" x-text="formatRupiah(totalNonCOD)"></span>
+                    </div>
+                </div>
+
+                <div class="p-2 space-y-2">
+                    <div class="flex gap-2">
+                        <input type="date" x-model="filterDate" class="bg-gray-100 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-red-500 focus:border-red-500 block p-2 font-bold">
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><i class="fas fa-search text-gray-400"></i></div>
+                            <input type="text" x-model="searchQuery" class="bg-gray-100 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-red-500 focus:border-red-500 block w-full pl-10 p-2 font-bold uppercase" placeholder="Cari Resi / Nama...">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 overflow-x-auto hide-scroll pb-1">
+                        <button @click="activeFilter = 'ALL'" class="px-3 py-1 rounded-full border shrink-0 text-xs font-bold transition" :class="activeFilter === 'ALL' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500'">SEMUA</button>
+                        <template x-for="(count, courier) in getSummary()" :key="courier">
+                            <button @click="activeFilter = (activeFilter === courier ? 'ALL' : courier)" class="px-3 py-1 rounded-full border shrink-0 text-xs font-bold transition flex items-center gap-1" :class="activeFilter === courier ? 'bg-red-600 text-white' : 'bg-red-50 text-red-500'">
+                                <span x-text="courier"></span><span class="bg-white/20 px-1.5 rounded text-[10px]" x-text="count"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:flex-1 md:overflow-y-auto p-0 md:p-4 bg-gray-50 pb-32 md:pb-28"> 
+                <div class="bg-white md:rounded-2xl md:shadow-sm border-b md:border border-gray-200 min-h-full">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-100 border-b">
+                            <tr>
+                                <th class="p-3 text-[10px] font-bold text-gray-500 uppercase">Resi</th>
+                                <th class="p-3 text-[10px] font-bold text-gray-500 uppercase">Info & Harga</th>
+                                <th class="p-3 text-[10px] font-bold text-gray-500 uppercase text-right">#</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <template x-for="item in filteredData" :key="item.id">
+                                <tr class="hover:bg-red-50 transition group cursor-pointer" @click="openEditModal(item)">
+                                    <td class="p-3 align-top w-24">
+                                        <div class="text-[10px] font-mono text-gray-400" x-text="item.time"></div>
+                                        <div class="text-sm font-bold text-gray-800 font-mono tracking-wide" x-text="item.code"></div>
+                                        <div class="mt-1 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold text-white shadow-sm" :class="getMpColor(item.marketplace)">
+                                            <span x-text="item.marketplace"></span>
+                                        </div>
+                                    </td>
+                                    <td class="p-3 align-top">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100" x-text="item.courier"></span>
+                                                <span x-show="item.isAuto" class="text-[9px] bg-gray-800 text-white px-1 rounded"><i class="fas fa-robot"></i></span>
+                                            </div>
+                                            <div class="text-xs font-bold px-2 py-1 rounded border inline-flex items-center gap-1" :class="item.isCOD ? 'text-green-600 bg-green-50 border-green-100' : 'text-blue-600 bg-blue-50 border-blue-100'">
+                                                <span x-text="formatRupiah(item.price)"></span>
+                                                <span class="text-[9px] uppercase opacity-70 border-l pl-1 ml-1" x-text="item.isCOD ? 'COD' : 'NON'"></span>
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-gray-600 truncate"><i class="fas fa-user text-gray-400 mr-1"></i><span x-text="item.receiver || '-'"></span></div>
+                                        <div class="text-xs text-gray-600 truncate"><i class="fas fa-map-marker-alt text-gray-400 mr-1"></i><span x-text="item.destination || '-'"></span></div>
+                                    </td>
+                                    <td class="p-3 align-middle text-right w-12">
+                                        <button @click.stop="deleteItem(item.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-times"></i></button>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr x-show="filteredData.length === 0">
+                                <td colspan="3" class="p-8 text-center text-gray-400 text-sm">
+                                    <i class="fas fa-filter text-3xl mb-2 opacity-30"></i><br>Tidak ada data sesuai filter.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div x-show="scannedData.length > 0" x-transition.slide.up class="fixed bottom-0 md:absolute left-0 right-0 bg-gray-900 text-white border-t border-red-600 z-50 shadow-2xl">
+                <div class="flex items-center justify-between p-3 gap-3 max-w-5xl mx-auto">
+                    <div class="flex-1 min-w-0"> 
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[9px] font-bold bg-green-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">BARU</span>
+                            <span class="text-[10px] text-gray-400 font-mono" x-text="scannedData[0]?.time"></span>
+                        </div>
+                        <h2 class="text-sm md:text-lg font-mono font-bold text-yellow-400 truncate leading-tight mb-0.5" x-text="scannedData[0]?.code"></h2>
+                    </div>
+                    <div class="shrink-0 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-right">
+                        <div class="text-[9px] text-gray-500 uppercase font-bold tracking-wider mb-0.5 text-right">
+                            <span class="px-1 rounded text-gray-900 font-bold" :class="scannedData[0]?.isCOD ? 'bg-green-400' : 'bg-blue-400'" x-text="scannedData[0]?.isCOD ? 'COD' : 'NON'"></span>
+                        </div>
+                        <div class="text-base md:text-xl font-bold text-white font-mono leading-none" x-text="formatRupiah(scannedData[0]?.price)"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div x-show="showPrintModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 class="font-bold flex items-center gap-2 mb-4 text-gray-800"><i class="fas fa-print text-yellow-500"></i> Cetak Surat Jalan</h3>
+            <p class="text-xs text-gray-500 mb-4">Pilih ekspedisi untuk mencetak manifest tanggal: <span class="font-bold text-gray-800" x-text="filterDate"></span></p>
+            <div class="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                <template x-for="(count, courier) in getSummary()" :key="courier">
+                    <button @click="printManifest(courier)" class="w-full flex justify-between items-center p-3 rounded-xl border hover:bg-red-50 hover:border-red-300 transition group">
+                        <span class="font-bold text-sm text-gray-700 group-hover:text-red-600" x-text="courier"></span>
+                        <span class="bg-gray-100 text-xs font-bold px-2 py-1 rounded text-gray-600" x-text="count + ' Paket'"></span>
+                    </button>
+                </template>
+                <div x-show="Object.keys(getSummary()).length === 0" class="text-center text-sm text-gray-400 py-4">Tidak ada data di tanggal ini.</div>
+            </div>
+            <button @click="showPrintModal = false" class="w-full py-2 bg-gray-200 hover:bg-gray-300 font-bold rounded-xl text-sm text-gray-600">Tutup</button>
+        </div>
+    </div>
+
+    <div x-show="showDetailModal" class="fixed inset-0 bg-black/80 z-50 flex items-end md:items-center justify-center p-0 md:p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl shadow-2xl overflow-hidden modal-enter">
+            <div class="bg-gray-800 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2"><i class="fas fa-edit"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Paket Baru'"></span></h3>
+            </div>
+            <div class="p-5 space-y-3 bg-gray-50">
+                <div class="bg-white p-3 rounded-xl border border-gray-200 text-center mb-2">
+                    <p class="text-xl font-mono font-bold text-gray-800 break-all" x-text="tempItem.code"></p>
+                    <div class="flex justify-center gap-2 mt-2">
+                        <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-600" x-text="tempItem.courier"></span>
+                        <span class="text-xs font-bold px-2 py-1 rounded bg-gray-100 text-gray-600" x-text="tempItem.marketplace"></span>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-3 rounded-xl border border-gray-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase">Nominal Ongkir</label>
+                        <div class="flex gap-1">
+                            <button @click="tempItem.isCOD = true" class="text-[9px] font-bold px-2 py-1 rounded border transition" :class="tempItem.isCOD ? 'bg-green-600 text-white border-green-600' : 'bg-gray-100 text-gray-400'">COD</button>
+                            <button @click="tempItem.isCOD = false" class="text-[9px] font-bold px-2 py-1 rounded border transition" :class="!tempItem.isCOD ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-400'">NON</button>
+                        </div>
+                    </div>
+                    <input type="number" x-model="tempItem.price" class="w-full text-2xl font-bold text-center outline-none border-b-2 border-gray-200 focus:border-green-500 pb-2" placeholder="0">
+                </div>
+                
+                <div class="space-y-2">
+                    <input type="text" x-model="tempItem.receiver" class="w-full p-3 text-sm border border-gray-300 rounded-lg font-bold outline-none focus:border-red-500" id="receiverInput" placeholder="Nama Penerima">
+                    <div class="flex gap-2">
+                        <input type="text" x-model="tempItem.destination" class="w-full p-3 text-sm border border-gray-300 rounded-lg outline-none focus:border-red-500" placeholder="Kota Tujuan">
+                        <input type="text" x-model="tempItem.weight" class="w-24 p-3 text-sm border border-gray-300 rounded-lg outline-none focus:border-red-500 text-center" placeholder="Kg">
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button @click="showDetailModal = false" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-200">Batal</button>
+                    <button @click="saveDetail()" class="flex-[2] bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold shadow-lg">SIMPAN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="beepSuccess" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    <audio id="beepError" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+    <script>
+        function appData() {
+            return {
+                isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
+                loginPass: '', loginError: false,
+                
+                scannedData: JSON.parse(localStorage.getItem('autokirimV27')) || [],
+                couriers: ['JNT Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'JNT Cargo'],
+                marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
+                
+                selectedCourier: 'JNT Express', selectedMp: 'Shopee', barcodeInput: '', 
+                autoDetect: true, isCameraActive: false, html5QrCode: null, 
+                showDetailModal: false, showPrintModal: false, tempItem: {}, scanStatus: 'idle',
+                
+                activeFilter: 'ALL', isCODInput: true, isEditMode: false,
+                filterDate: new Date().toLocaleDateString('en-CA'), 
+                searchQuery: '',
+
+                initApp() { this.$watch('scannedData', (v) => localStorage.setItem('autokirimV27', JSON.stringify(v))); },
+
+                doLogin() {
+                    if(this.loginPass === 'admin123') { 
+                        this.isLoggedIn = true; sessionStorage.setItem('autokirim_session', 'true'); 
+                    } else { this.loginError = true; this.loginPass = ''; }
+                },
+                logout() { if(confirm('Keluar?')) { this.isLoggedIn = false; sessionStorage.removeItem('autokirim_session'); } },
+
+                get filteredData() {
+                    let data = this.scannedData;
+                    // FIX: Filter Date matched EXACTLY with saved YYYY-MM-DD
+                    if (this.filterDate) data = data.filter(i => i.date === this.filterDate);
+                    
+                    if (this.searchQuery) {
+                        const q = this.searchQuery.toLowerCase();
+                        data = data.filter(i => i.code.toLowerCase().includes(q) || (i.receiver && i.receiver.toLowerCase().includes(q)));
+                    }
+                    if (this.activeFilter !== 'ALL') data = data.filter(i => i.courier === this.activeFilter);
+                    return data;
+                },
+
+                get totalCOD() { return this.filteredData.filter(i => i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); },
+                get totalNonCOD() { return this.filteredData.filter(i => !i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); },
+                get scanStatusClass() { return this.scanStatus === 'success' ? 'flash-success' : (this.scanStatus === 'error' ? 'flash-error' : ''); },
+                
+                formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0); },
+
+                preProcessScan(codeFromCamera = null) {
+                    let code = codeFromCamera || this.barcodeInput.trim();
+                    code = code.toUpperCase().replace(/\s+/g, '');
+                    if(!code) return;
+
+                    if(!this.isEditMode && this.scannedData.some(i => i.code === code)) { 
+                        this.triggerFeedback('error'); 
+                        if(!codeFromCamera) { alert('Resi sudah ada!'); this.barcodeInput=''; }
+                        return; 
+                    }
+                    
+                    this.triggerFeedback('success'); 
+
+                    let finalCourier = this.selectedCourier;
+                    if(this.autoDetect) {
+                        if(code.startsWith('JP')||code.startsWith('JX')) finalCourier = 'JNT Express';
+                        else if(code.startsWith('SPX')||code.startsWith('ID')) finalCourier = 'SPX';
+                        else if(code.startsWith('TKP')) finalCourier = 'Anteraja';
+                        else if(code.startsWith('LX')) finalCourier = 'Lazada Lex';
+                        else if(code.startsWith('00')) finalCourier = 'Sicepat';
+                    }
+                    const isAuto = finalCourier !== this.selectedCourier;
+                    let currentIsCOD = (this.selectedMp === 'Manual') ? this.isCODInput : true;
+
+                    this.isEditMode = false;
+                    
+                    // SAVE AS YYYY-MM-DD (Standard ISO)
+                    const d = new Date();
+                    const localDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+
+                    this.tempItem = {
+                        id: Date.now(),
+                        code: code, courier: finalCourier, marketplace: this.selectedMp, isAuto: isAuto, isCOD: currentIsCOD,
+                        receiver: '', destination: '', weight: '', price: 0,
+                        time: d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}),
+                        date: localDate
+                    };
+
+                    setTimeout(() => { 
+                        this.showDetailModal = true; 
+                        setTimeout(() => document.getElementById('receiverInput').focus(), 100); 
+                        this.barcodeInput = ''; 
+                    }, 300);
+                },
+
+                openEditModal(item) {
+                    this.isEditMode = true;
+                    this.tempItem = JSON.parse(JSON.stringify(item));
+                    this.showDetailModal = true;
+                },
+
+                saveDetail() { 
+                    if (this.isEditMode) {
+                        const index = this.scannedData.findIndex(i => i.id === this.tempItem.id);
+                        if (index !== -1) this.scannedData[index] = this.tempItem;
+                    } else {
+                        this.scannedData.unshift(this.tempItem); 
+                    }
+                    this.showDetailModal = false; 
+                    if(!this.isCameraActive) document.getElementById('barcodeInput').focus();
+                },
+
+                deleteItem(id) { if(confirm("Hapus data ini?")) this.scannedData = this.scannedData.filter(i => i.id !== id); },
+                
+                triggerFeedback(type) {
+                    this.scanStatus = type;
+                    const audio = document.getElementById(type === 'success' ? 'beepSuccess' : 'beepError');
+                    if(audio) { audio.currentTime = 0; audio.play().catch(()=>{}); }
+                    setTimeout(() => this.scanStatus = 'idle', 800);
+                },
+                
+                toggleCamera() {
+                    if (this.isCameraActive) {
+                        if(this.html5QrCode) this.html5QrCode.stop().then(() => { this.html5QrCode.clear(); this.isCameraActive = false; });
+                    } else {
+                        this.isCameraActive = true;
+                        this.$nextTick(() => {
+                            if (!navigator.mediaDevices) return alert("Kamera tidak didukung/izin ditolak.");
+                            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                            if(!this.html5QrCode) this.html5QrCode = new Html5Qrcode("reader");
+                            this.html5QrCode.start({ facingMode: "environment" }, config, (text) => { if(!this.showDetailModal && this.scanStatus === 'idle') this.preProcessScan(text); }).catch(e => { alert("Error Kamera: " + e); this.isCameraActive = false; });
+                        });
+                    }
+                },
+
+                getSummary() { 
+                    // Summary based on FILTERED data (respects date filter)
+                    const c={}; 
+                    this.filteredData.forEach(i=>{c[i.courier]=(c[i.courier]||0)+1}); 
+                    return c; 
+                },
+                getMpColor(mp) { return {'Shopee':'bg-orange-500','Tokopedia':'bg-green-500','Lazada':'bg-blue-600'}[mp] || 'bg-gray-400'; },
+                
+                resetData() { if(confirm("HAPUS SEMUA DATA?")) this.scannedData = []; },
+                backupData() { 
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.scannedData));
+                    const node = document.createElement('a');
+                    node.setAttribute("href", dataStr);
+                    node.setAttribute("download", "Backup_AutoKirim_" + new Date().toISOString() + ".json");
+                    document.body.appendChild(node); node.click(); node.remove();
+                },
+
+                // EXPORT EXCEL (CSV)
+                exportExcel() {
+                    const dataToExport = this.filteredData;
+                    if(dataToExport.length === 0) return alert("Tidak ada data untuk diexport.");
+
+                    let csvContent = "data:text/csv;charset=utf-8,";
+                    csvContent += "Tanggal,Waktu,Ekspedisi,Resi,Penerima,Tujuan,Berat,Status,Nominal\n";
+
+                    dataToExport.forEach(row => {
+                         csvContent += `${row.date},${row.time},${row.courier},${row.code},"${row.receiver}","${row.destination}",${row.weight},${row.isCOD?'COD':'NON-COD'},${row.price}\n`;
+                    });
+
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", `Laporan_Autokirim_${this.filterDate}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                },
+
+                // PRINT MANIFEST (SURAT JALAN)
+                printManifest(courierName) {
+                    const manifestData = this.filteredData.filter(i => i.courier === courierName);
+                    if(manifestData.length === 0) return alert("Tidak ada data untuk " + courierName);
+
+                    const totalQty = manifestData.length;
+                    const totalCOD = manifestData.filter(i => i.isCOD).reduce((a,b)=>a+(parseInt(b.price)||0),0);
+
+                    const printWindow = window.open('', '', 'width=900,height=600');
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Manifest ${courierName}</title>
+                            <style>
+                                body { font-family: sans-serif; padding: 20px; }
+                                .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                                .meta { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
+                                table { width: 100%; border-collapse: collapse; }
+                                th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 12px; }
+                                th { background: #eee; }
+                                .footer { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+                                .sign { margin-top: 60px; border-top: 1px solid #000; width: 150px; display: inline-block; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                                <h2>SERAH TERIMA PAKET - ${courierName.toUpperCase()}</h2>
+                                <p>Tanggal: ${this.filterDate}</p>
+                            </div>
+                            <div class="meta">
+                                <span>Total Paket: ${totalQty}</span>
+                                <span>Total Nilai COD: ${this.formatRupiah(totalCOD)}</span>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%">No</th>
+                                        <th style="width: 20%">No. Resi</th>
+                                        <th style="width: 25%">Penerima</th>
+                                        <th style="width: 20%">Tujuan</th>
+                                        <th style="width: 15%">Tipe</th>
+                                        <th style="width: 15%">Nominal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${manifestData.map((item, index) => `
+                                        <tr>
+                                            <td>${index + 1}</td>
+                                            <td>${item.code}</td>
+                                            <td>${item.receiver || '-'}</td>
+                                            <td>${item.destination || '-'}</td>
+                                            <td>${item.isCOD ? 'COD' : 'NON-COD'}</td>
+                                            <td>${this.formatRupiah(item.price)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            <div class="footer">
+                                <div>
+                                    <p>Diserahkan Oleh,</p>
+                                    <div class="sign">Admin / Sender</div>
+                                </div>
+                                <div>
+                                    <p>Diterima Oleh,</p>
+                                    <div class="sign">Kurir / Driver</div>
+                                </div>
+                            </div>
+                            <script>window.print(); window.onafterprint = function() { window.close(); }</sc` + `ript>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                },
+
+                shareToWA() {
+                    if(this.filteredData.length === 0) return alert("Tidak ada data untuk dikirim.");
+                    const date = this.filterDate || "SEMUA TANGGAL";
+                    let text = `*LAPORAN AUTOKIRIM*\nTanggal: ${date}\n\n`;
+                    text += `📦 Total Paket: ${this.filteredData.length}\n`;
+                    text += `💰 Total COD: ${this.formatRupiah(this.totalCOD)}\n`;
+                    text += `💳 Total Non-COD: ${this.formatRupiah(this.totalNonCOD)}\n\n`;
+                    text += `*Rincian Ekspedisi:*\n`;
+                    const summary = this.getSummary();
+                    for (const [key, val] of Object.entries(summary)) text += `- ${key}: ${val} paket\n`;
+                    text += `\n_Dikirim via AutoKirim Web App_`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
