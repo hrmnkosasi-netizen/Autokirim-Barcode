@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Autokirim V54 (Colorful UI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        [x-cloak] { display: none !important; }
+        
+        /* Scanner Styles */
+        #reader { width: 100%; height: 100%; background: #000; border-radius: 16px; overflow: hidden; }
+        #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .scan-box { width: 90%; height: 35%; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.5); position: relative; transition: all 0.2s; }
+        .laser { position: absolute; left: 2%; width: 96%; height: 2px; background: #ef4444; box-shadow: 0 0 15px #ef4444; top: 50%; animation: laserAnim 2s infinite ease-in-out; }
+        @keyframes laserAnim { 0% { transform: translateY(-20px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+        .flash-success .scan-box { border: 4px solid #22c55e !important; }
+        .flash-error .scan-box { border: 4px solid #dc2626 !important; }
+
+        /* Custom Dropdown */
+        .select-wrapper { position: relative; }
+        .select-wrapper select { appearance: none; -webkit-appearance: none; padding-right: 2.5rem; background-image: none; }
+        .select-arrow { pointer-events: none; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: #64748b; transition: transform 0.2s; }
+        .select-wrapper:focus-within .select-arrow { transform: translateY(-50%) rotate(180deg); color: #ef4444; }
+
+        /* General UI */
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 110; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .modal-enter { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Colorful Hover Effects */
+        .row-card:hover { transform: scale-[1.01]; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        
+        /* Background Mesh Gradient */
+        .bg-mesh { background-color: #f8fafc; background-image: radial-gradient(at 0% 0%, hsla(349,100%,88%,1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(24,100%,88%,1) 0, transparent 50%); }
+    </style>
+</head>
+<body class="bg-mesh text-slate-800 flex flex-col min-h-screen md:h-screen md:overflow-hidden" x-data="appData()" x-init="initApp()">
+
+    <div x-show="isLoading" class="loading-overlay" x-transition>
+        <div class="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-xl">
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-100 border-t-red-600 mb-4"></div>
+            <p class="text-sm font-bold text-slate-700" x-text="loadingText"></p>
+        </div>
+    </div>
+
+    <div x-show="!isLoggedIn" class="fixed inset-0 z-[100] bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center flex items-center justify-center p-4" x-transition.opacity>
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-900/90 backdrop-blur-sm"></div>
+        <div class="bg-white/95 backdrop-blur rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center modal-enter relative z-10 border border-white/20">
+            <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-5 text-white shadow-lg shadow-purple-500/30 transform rotate-3"><i class="fas fa-rocket text-3xl"></i></div>
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-1">AUTOKIRIM V54</h1>
+            <p class="text-sm text-slate-500 mb-8 font-medium">Colorful & Modern Interface</p>
+            <form @submit.prevent="doLogin">
+                <div class="mb-4 text-left select-wrapper">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase ml-1 mb-1 block tracking-wider">Pilih User</label>
+                    <select x-model="selectedUser" class="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 p-3.5 rounded-xl font-bold text-slate-700 outline-none transition-all cursor-pointer">
+                        <option value="" disabled>-- Siapa kamu? --</option>
+                        <option value="Admin">Admin Utama</option>
+                        <option value="Karyawan 1">Karyawan 1</option>
+                        <option value="Karyawan 2">Karyawan 2</option>
+                        <option value="Karyawan 3">Karyawan 3</option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow text-sm"></i>
+                </div>
+                <input type="password" x-model="loginPass" class="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 p-3.5 rounded-xl font-bold text-center text-lg outline-none mb-6 transition-all placeholder:text-slate-300" placeholder="Password" autofocus>
+                <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-all transform active:scale-95">MASUK SISTEM</button>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="isLoggedIn" class="flex flex-col md:flex-row w-full md:h-full" x-cloak>
+        
+        <header class="md:hidden bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 text-white p-3 shadow-md flex justify-between items-center z-30 relative shrink-0 sticky top-0">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner border border-white/30"><i class="fas fa-box-open text-sm"></i></div>
+                <div><h1 class="font-extrabold text-sm tracking-tight text-white drop-shadow-sm">AUTOKIRIM</h1><p class="text-[10px] font-semibold text-white/80" x-text="selectedUser"></p></div>
+            </div>
+            <div class="flex gap-2">
+                <button @click="toggleView()" class="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all border border-white/20"><i class="fas" :class="currentView === 'home' ? 'fa-chart-pie' : 'fa-home'"></i></button>
+                <button @click="logout()" class="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all border border-white/20"><i class="fas fa-power-off"></i></button>
+            </div>
+        </header>
+
+        <aside class="w-full md:w-[400px] bg-white/80 backdrop-blur-md border-r border-slate-200 flex flex-col z-20 shadow-2xl shrink-0 h-auto md:h-full" x-show="currentView === 'home'">
+            <div class="hidden md:flex h-20 bg-gradient-to-r from-rose-600 to-orange-600 text-white items-center px-6 justify-between shrink-0 shadow-md relative overflow-hidden">
+                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-lg"><i class="fas fa-rocket text-lg"></i></div>
+                    <div><h1 class="font-extrabold text-lg tracking-tight drop-shadow-md">AUTOKIRIM</h1><p class="text-xs font-medium text-white/80">V54 Colorful Edition</p></div>
+                </div>
+            </div>
+            
+            <div class="md:flex-1 md:overflow-y-auto p-5 space-y-5">
+                
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-2xl border border-orange-200 shadow-sm" x-show="hasOldData">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center animate-bounce"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div><h3 class="text-xs font-bold text-orange-900">Data Offline Tersimpan!</h3><p class="text-[10px] text-orange-700">Segera upload agar tidak hilang.</p></div>
+                    </div>
+                    <button @click="migrateAllData()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md shadow-orange-500/20 transition-all">Upload Sekarang</button>
+                </div>
+
+                <div class="bg-gradient-to-b from-white to-slate-50 p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-sliders-h text-rose-500"></i> Pengaturan</label>
+                        <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded-md border border-rose-100 font-bold shadow-sm">Manual Mode</span>
+                    </div>
+
+                    <div class="flex gap-2 overflow-x-auto hide-scroll mb-3 pb-1">
+                        <template x-for="mp in marketplaces" :key="mp.name">
+                            <button @click="selectedMp = mp.name" class="whitespace-nowrap px-4 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 shrink-0 shadow-sm" 
+                            :class="selectedMp === mp.name ? 'bg-slate-800 text-white border-slate-800 ring-2 ring-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'">
+                                <i class="fas" :class="mp.icon" :style="selectedMp === mp.name ? 'color: #fbbf24' : ''"></i> <span x-text="mp.name"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div x-show="selectedMp === 'Manual'" class="bg-slate-100 p-1 rounded-xl flex shadow-inner">
+                            <button @click="isCODInput = true" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all" :class="isCODInput ? 'bg-white text-green-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'">COD (Bayar)</button>
+                            <button @click="isCODInput = false" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all" :class="!isCODInput ? 'bg-white text-blue-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'">Non-COD</button>
+                        </div>
+                        
+                        <div class="select-wrapper">
+                            <select x-model="selectedCourier" class="w-full bg-white border border-slate-200 text-slate-800 text-sm font-bold rounded-xl p-3 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-50 transition-all cursor-pointer shadow-sm appearance-none">
+                                <template x-for="c in couriers" :key="c"><option :value="c" x-text="c"></option></template>
+                            </select>
+                            <i class="fas fa-truck-fast select-arrow text-xs text-rose-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-1.5 rounded-2xl shadow-xl shadow-rose-200/50 relative group overflow-hidden border-2 border-slate-800">
+                    <div class="relative w-full h-48 md:h-56 bg-black rounded-xl overflow-hidden" :class="scanStatusClass">
+                        <div x-show="!isCameraActive" @click="toggleCamera()" class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer text-slate-500 z-10 hover:text-slate-400 transition bg-gradient-to-b from-slate-800 to-black">
+                            <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-3 ring-4 ring-slate-700/50 shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform"><i class="fas fa-camera text-2xl text-rose-400"></i></div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-rose-400 transition-colors">Ketuk Kamera</span>
+                        </div>
+                        <div id="reader" x-show="isCameraActive"></div>
+                        <div x-show="isCameraActive" class="scan-overlay"><div class="scan-box"><div class="laser"></div></div></div>
+                    </div>
+                    <button @click="toggleCamera()" class="absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md transition-all z-20 border border-white/20" :class="isCameraActive ? 'bg-red-500/80 text-white' : 'bg-white/10 text-white hover:bg-white/20'"><i class="fas" :class="isCameraActive ? 'fa-stop' : 'fa-play pl-1'"></i></button>
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="barcodeInput" x-model="barcodeInput" @keydown.enter="preProcessScan()" class="w-full bg-white border border-slate-200 text-slate-900 text-sm font-bold rounded-xl p-3.5 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-50 uppercase font-mono shadow-sm placeholder:text-slate-300 transition-all" placeholder="KETIK RESI..." autocomplete="off">
+                    <button @click="preProcessScan()" class="bg-slate-800 hover:bg-slate-900 text-white px-5 rounded-xl shadow-lg shadow-slate-300 transition-all"><i class="fas fa-arrow-right"></i></button>
+                </div>
+                
+                <div class="pt-2">
+                    <button @click="refreshData()" class="w-full bg-white hover:bg-blue-50 text-blue-600 py-3 rounded-xl font-bold text-xs mt-2 border border-blue-100 transition-all flex items-center justify-center gap-2 group shadow-sm"><i class="fas fa-sync group-hover:rotate-180 transition-transform duration-500 text-blue-400"></i> SINKRONISASI MANUAL</button>
+                </div>
+                
+                <div class="pt-6 mt-4 border-t border-slate-100">
+                    <button @click="shareToWA()" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-emerald-500/30 mb-3 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"><i class="fab fa-whatsapp text-xl"></i> SHARE LAPORAN WA</button>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <button @click="showPrintModal = true" class="bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-slate-200 transition-all"><i class="fas fa-print text-yellow-400"></i> MANIFEST</button>
+                        <button @click="exportExcel()" class="bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-teal-500/20 transition-all"><i class="fas fa-file-excel"></i> EXCEL</button>
+                    </div>
+                    
+                    <button @click="showDeleteModal = true" class="w-full bg-rose-50 text-rose-600 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-rose-100 transition-colors"><i class="fas fa-trash-alt"></i> HAPUS DATA DATABASE</button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 bg-white/50 flex flex-col relative md:overflow-hidden" x-show="currentView === 'home'" x-transition.opacity>
+            <div class="bg-white/80 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-40">
+                <div class="flex items-center gap-3 px-4 py-3 overflow-x-auto hide-scroll">
+                    <div class="flex items-center gap-2 pl-2 pr-4 py-2 bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-2xl shrink-0 shadow-lg shadow-slate-300">
+                        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]"><i class="fas fa-box"></i></div>
+                        <div><p class="text-[9px] uppercase font-bold text-slate-300">Total</p><p class="text-sm font-bold leading-none" x-text="filteredData.length"></p></div>
+                    </div>
+                    <div class="flex items-center gap-2 pl-2 pr-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl shrink-0 shadow-lg shadow-green-200">
+                        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]"><i class="fas fa-wallet"></i></div>
+                        <div><p class="text-[9px] uppercase font-bold text-green-100">COD</p><p class="text-sm font-bold leading-none" x-text="formatRupiah(totalCOD)"></p></div>
+                    </div>
+                    <div class="flex items-center gap-2 pl-2 pr-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-2xl shrink-0 shadow-lg shadow-blue-200">
+                        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px]"><i class="fas fa-credit-card"></i></div>
+                        <div><p class="text-[9px] uppercase font-bold text-blue-100">Non-COD</p><p class="text-sm font-bold leading-none" x-text="formatRupiah(totalNonCOD)"></p></div>
+                    </div>
+                </div>
+
+                <div class="p-3 space-y-3 bg-white/50 border-t border-slate-100">
+                    <div class="flex gap-2">
+                        <div class="flex bg-white border border-slate-200 rounded-xl shrink-0 shadow-sm focus-within:ring-2 focus-within:ring-rose-100 transition-all overflow-hidden group hover:border-rose-200">
+                            <input type="date" x-model="filterDate" class="bg-transparent text-slate-700 text-xs focus:ring-0 block p-2.5 font-bold border-none outline-none">
+                            <button @click="filterDate = ''" class="px-3 text-slate-400 hover:text-rose-500 hover:bg-rose-50 border-l border-slate-100 transition-colors"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="relative flex-1 group">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 group-focus-within:text-rose-500 transition-colors"><i class="fas fa-search"></i></div>
+                            <input type="text" x-model="searchQuery" class="bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:border-rose-500 focus:ring-2 focus:ring-rose-50 block w-full pl-9 p-2.5 font-bold uppercase shadow-sm transition-all" placeholder="Cari Resi / Nama...">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 overflow-x-auto hide-scroll pb-1">
+                        <button @click="activeFilter = 'ALL'" class="px-4 py-1.5 rounded-full border shrink-0 text-[11px] font-bold transition-all shadow-sm" :class="activeFilter === 'ALL' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'">SEMUA</button>
+                        <template x-for="(count, courier) in getSummary()" :key="courier">
+                            <button @click="activeFilter = (activeFilter === courier ? 'ALL' : courier)" class="px-3 py-1.5 rounded-full border shrink-0 text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-sm" :class="activeFilter === courier ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-slate-600 border-slate-200 hover:border-rose-200'">
+                                <span x-text="courier"></span>
+                                <span class="px-1.5 py-0.5 rounded-full text-[9px] min-w-[18px] text-center" :class="activeFilter === courier ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'" x-text="count"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:flex-1 md:overflow-y-auto p-0 md:p-4 bg-transparent pb-32 md:pb-28"> 
+                <div class="md:rounded-2xl md:shadow-sm min-h-full">
+                    <table class="w-full text-left table-fixed border-collapse">
+                        <thead class="bg-white border-b border-slate-100 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="p-4 text-[10px] font-extrabold text-slate-400 uppercase w-[25%] tracking-wider">Waktu</th>
+                                <th class="p-4 text-[10px] font-extrabold text-slate-400 uppercase w-[35%] tracking-wider">Info Paket</th>
+                                <th class="p-4 text-[10px] font-extrabold text-slate-400 uppercase w-[40%] text-right tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            <template x-for="item in filteredData" :key="item.code">
+                                <tr class="transition duration-200 cursor-pointer group row-card relative border-l-[6px]" :class="getCourierColor(item.courier)" @click="openEditModal(item)">
+                                    <td class="p-4 align-top">
+                                        <div class="text-xs font-bold text-slate-800" x-text="item.dayName || '-'"></div>
+                                        <div class="text-[10px] text-slate-500 font-mono mt-0.5"><i class="far fa-clock text-[9px] mr-0.5 opacity-70"></i> <span x-text="item.time"></span></div>
+                                        <div class="text-[9px] text-slate-400 mt-1" x-text="formatDateID(item.date)"></div>
+                                    </td>
+                                    <td class="p-4 align-top">
+                                        <div class="inline-block bg-slate-50 border border-slate-100 px-2 py-1 rounded mb-2 w-full">
+                                            <div class="text-sm font-bold text-slate-800 font-mono tracking-wide break-all leading-tight group-hover:text-rose-600 transition-colors" x-text="item.code"></div>
+                                        </div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200" x-text="item.courier"></span>
+                                            <span class="text-[9px] font-bold text-white px-2 py-0.5 rounded shadow-sm" :class="getMpColor(item.marketplace)" x-text="item.marketplace"></span>
+                                        </div>
+                                        <div class="mt-2 flex items-center gap-1 text-[9px] text-slate-400">
+                                            <div class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-600 border border-slate-200" x-text="(item.admin || 'S').charAt(0)"></div>
+                                            <span x-text="item.admin || 'System'"></span>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 align-top text-right">
+                                        <div class="flex flex-col items-end gap-1 mb-2">
+                                            <div class="text-xs font-bold px-2.5 py-1 rounded-lg border inline-flex items-center gap-1.5 shadow-sm" :class="item.isCOD ? 'text-green-700 bg-green-50 border-green-200' : 'text-blue-700 bg-blue-50 border-blue-200'">
+                                                <span x-text="formatRupiah(item.price)"></span>
+                                                <span class="text-[8px] uppercase tracking-wide font-extrabold px-1.5 py-0.5 rounded bg-white/60 shadow-sm" x-text="item.isCOD ? 'COD' : 'NON'"></span>
+                                            </div>
+                                        </div>
+                                        <div class="text-[10px] text-slate-700 truncate max-w-[120px] ml-auto font-bold" x-text="item.receiver || '-'"></div>
+                                        <div class="text-[9px] text-slate-400 truncate max-w-[120px] ml-auto flex items-center justify-end gap-1"><i class="fas fa-map-marker-alt text-[8px] text-rose-400"></i> <span x-text="item.destination || '-'"></span></div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr x-show="filteredData.length === 0">
+                                <td colspan="3" class="p-10 text-center text-slate-400 text-sm bg-slate-50/50">
+                                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-3 text-rose-200 shadow-md"><i class="fas fa-search text-3xl"></i></div>
+                                    <span x-show="!searchQuery && onlineData.length > 0">Tidak ada data di tanggal <b x-text="formatDateID(filterDate)"></b>.<br><span class="text-rose-600 cursor-pointer underline font-bold hover:text-rose-700" @click="filterDate = ''">TAMPILKAN SEMUA DATA</span></span>
+                                    <span x-show="!searchQuery && onlineData.length === 0">Belum ada data. <br><span class="text-xs opacity-70">Mulai scan paket sekarang!</span></span>
+                                    <span x-show="searchQuery">Resi tidak ditemukan.</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <main class="flex-1 bg-white flex flex-col overflow-y-auto p-4 md:p-8" x-show="currentView === 'dashboard'" x-transition.opacity>
+            
+            <div class="mb-6 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-orange-600 tracking-tight">Dashboard Overview</h2>
+                    <p class="text-sm text-slate-500 font-medium mt-1">Statistik Harian: <span class="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200" x-text="formatDateID(filterDate)"></span></p>
+                </div>
+                <button @click="toggleView()" class="text-xs font-bold text-slate-500 hover:text-rose-600 bg-white px-3 py-2 rounded-lg border border-slate-200 hover:border-rose-200 transition-all shadow-sm">Kembali <i class="fas fa-arrow-right ml-1"></i></button>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 row-card group">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors"><i class="fas fa-cube text-lg"></i></div>
+                    <div class="text-2xl font-extrabold text-slate-800" x-text="filteredData.length"></div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Paket</div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 row-card group">
+                    <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center mb-3 group-hover:bg-green-600 group-hover:text-white transition-colors"><i class="fas fa-wallet text-lg"></i></div>
+                    <div class="text-2xl font-extrabold text-slate-800" x-text="filteredData.filter(i=>i.isCOD).length"></div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Paket COD</div>
+                </div>
+                <div class="bg-gradient-to-br from-rose-600 to-orange-600 p-4 rounded-2xl shadow-lg shadow-rose-500/30 row-card text-white">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-3 backdrop-blur-sm"><i class="fas fa-truck text-lg"></i></div>
+                    <div class="text-2xl font-extrabold" x-text="Object.keys(getSummary()).length"></div>
+                    <div class="text-[10px] font-bold text-rose-100 uppercase tracking-wider">Ekspedisi Aktif</div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 row-card group">
+                    <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:bg-purple-600 group-hover:text-white transition-colors"><i class="fas fa-users text-lg"></i></div>
+                    <div class="text-2xl font-extrabold text-slate-800" x-text="Object.keys(getAdminStats()).length"></div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Aktif</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><div class="w-2 h-5 bg-rose-500 rounded-full"></div> Distribusi Ekspedisi</h3>
+                    <div class="relative h-64"><canvas id="courierChart"></canvas></div>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><div class="w-2 h-5 bg-blue-500 rounded-full"></div> Metode Pembayaran</h3>
+                    <div class="relative h-64"><canvas id="paymentChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10">
+                <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><div class="w-2 h-5 bg-slate-800 rounded-full"></div> Leaderboard Admin</h3>
+                <div class="overflow-hidden rounded-xl border border-slate-100">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider"><tr><th class="p-3">Admin</th><th class="p-3 text-right">Jumlah Scan</th></tr></thead>
+                        <tbody class="divide-y divide-slate-50">
+                            <template x-for="(count, user) in getAdminStats()" :key="user">
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="p-3 font-bold text-slate-700 flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 text-white flex items-center justify-center text-xs shadow-md shadow-slate-200" x-text="user.charAt(0)"></div>
+                                        <span x-text="user"></span>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        <span class="bg-rose-50 text-rose-700 border border-rose-100 px-3 py-1 rounded-full font-bold text-xs" x-text="count + ' Paket'"></span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div x-show="showDeleteModal" class="fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center modal-enter">
+            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 ring-8 ring-red-50/50"><i class="fas fa-trash-alt text-2xl"></i></div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">Hapus Data?</h3>
+            <p class="text-xs text-slate-500 mb-6">Tindakan ini tidak bisa dibatalkan.</p>
+            <button @click="deleteOnlineData('today')" class="w-full bg-red-600 hover:bg-red-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-500/20 mb-3 flex items-center justify-center gap-2"><i class="fas fa-calendar-day"></i> HAPUS HARI INI</button>
+            <button @click="deleteOnlineData('all')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-xl font-bold shadow-sm mb-4 flex items-center justify-center gap-2"><i class="fas fa-dumpster"></i> RESET SEMUA</button>
+            <button @click="showDeleteModal = false" class="text-slate-400 text-xs font-bold hover:text-slate-600">BATALKAN</button>
+        </div>
+    </div>
+
+    <div x-show="showDetailModal" class="fixed inset-0 bg-slate-900/90 z-[100] flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto" x-cloak>
+        <div class="bg-white w-full md:max-w-md rounded-3xl shadow-2xl overflow-hidden modal-enter mt-4 md:mt-10 mb-20 relative">
+            <div class="bg-slate-900 p-5 text-white flex justify-between items-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-rose-600 to-orange-600 opacity-90"></div>
+                <h3 class="font-bold flex items-center gap-2 relative z-10 text-lg"><i class="fas" :class="isEditMode ? 'fa-edit' : 'fa-cloud-upload-alt'"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Konfirmasi Paket'"></span></h3>
+                <button @click="printThermal(tempItem)" class="text-[10px] bg-white text-rose-600 px-3 py-1.5 rounded-full font-bold hover:bg-slate-100 relative z-10 shadow-lg"><i class="fas fa-print mr-1"></i> STRUK</button>
+            </div>
+            <div class="p-6 space-y-4 bg-slate-50">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full" :class="getCourierColor(tempItem.courier).replace('border-l-[6px]', 'bg')"></div>
+                    <p class="text-xl font-mono font-bold text-slate-800 break-all" x-text="tempItem.code"></p>
+                    <div class="flex justify-center gap-2 mt-3">
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200" x-text="tempItem.courier"></span>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-slate-600 border border-slate-200 shadow-sm" x-text="tempItem.marketplace"></span>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jenis & Ongkir</label>
+                        <div class="flex bg-slate-100 rounded-lg p-1">
+                            <button @click="tempItem.isCOD = true" class="text-[10px] font-bold px-3 py-1 rounded-md transition-all" :class="tempItem.isCOD ? 'bg-white text-green-600 shadow-sm' : 'text-slate-400'">COD</button>
+                            <button @click="tempItem.isCOD = false" class="text-[10px] font-bold px-3 py-1 rounded-md transition-all" :class="!tempItem.isCOD ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'">NON</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-0 top-1 text-slate-400 font-bold text-sm">Rp</span>
+                        <input type="number" x-model="tempItem.price" class="w-full text-3xl font-bold text-center outline-none bg-transparent border-b border-slate-200 focus:border-green-500 pb-2 text-slate-800 placeholder:text-slate-200" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <input type="text" x-model="tempItem.receiver" class="w-full p-4 text-sm border border-slate-200 rounded-xl outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-50 bg-white shadow-sm transition-all font-semibold text-slate-700 placeholder:font-normal" placeholder="Nama Penerima">
+                    <div class="flex gap-3">
+                        <input type="text" x-model="tempItem.destination" class="w-full p-4 text-sm border border-slate-200 rounded-xl outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-50 bg-white shadow-sm transition-all font-semibold text-slate-700 placeholder:font-normal" placeholder="Kota Tujuan">
+                        <input type="text" x-model="tempItem.weight" class="w-24 p-4 text-sm border border-slate-200 rounded-xl outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-50 bg-white shadow-sm text-center font-bold" placeholder="Kg">
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button @click="showDetailModal = false" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Batal</button>
+                    <button @click="saveData()" class="flex-[2] bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-700 hover:to-orange-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-500/30 transition-all transform active:scale-95" x-text="isEditMode ? 'UPDATE DATA' : 'SIMPAN DATA'"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showPrintModal" class="fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 relative">
+            <h3 class="font-bold flex items-center gap-2 mb-4 text-slate-800 text-lg"><i class="fas fa-print text-yellow-500"></i> Cetak Surat Jalan</h3>
+            <div class="space-y-2.5 mb-6 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                <template x-for="(count, courier) in getSummary()" :key="courier">
+                    <button @click="printManifest(courier)" class="w-full flex justify-between items-center p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-rose-50 hover:border-rose-200 transition group">
+                        <span class="font-bold text-sm text-slate-700 group-hover:text-rose-600" x-text="courier"></span>
+                        <span class="bg-white text-xs font-bold px-2.5 py-1 rounded-full text-slate-500 shadow-sm border border-slate-100" x-text="count + ' Paket'"></span>
+                    </button>
+                </template>
+                <div x-show="Object.keys(getSummary()).length === 0" class="text-center text-sm text-slate-400 py-8 italic bg-slate-50 rounded-xl border border-dashed border-slate-200">Belum ada data untuk dicetak.</div>
+            </div>
+            <button @click="showPrintModal = false" class="w-full py-3 bg-slate-100 hover:bg-slate-200 font-bold rounded-xl text-sm text-slate-600 transition-colors">Tutup</button>
+        </div>
+    </div>
+
+    <audio id="beepSuccess" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    <audio id="beepError" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+    <script>
+        function appData() {
+            return {
+                apiUrl: 'https://script.google.com/macros/s/AKfycbw_qEwKjM-lOjxQDPSqrN9Pk-oXQp9gMYfkSDuDHzEol-BzQP77QcMRlwvMxEHWfRUEww/exec',
+
+                isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
+                selectedUser: sessionStorage.getItem('autokirim_user') || '',
+                loginPass: '', isLoading: false, loadingText: 'Menghubungkan...',
+                onlineData: [],
+                couriers: ['JNT Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'JNT Cargo'],
+                marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
+                selectedCourier: 'JNT Express', selectedMp: 'Shopee', barcodeInput: '', 
+                
+                isCameraActive: false, html5QrCode: null, showDetailModal: false, showPrintModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
+                isCODInput: true, searchQuery: '', activeFilter: 'ALL', isEditMode: false, currentView: 'home',
+                filterDate: new Date().toLocaleDateString('en-CA'), hasOldData: false,
+                courierChart: null, paymentChart: null,
+
+                initApp() { this.filterDate = this.getTodayISO(); if(this.isLoggedIn) { this.refreshData(); this.checkAllOldData(); } },
+                checkAllOldData() { const keys = ['autokirimV18', 'autokirimV25', 'autokirimV27', 'autokirimV28', 'autokirimV30', 'autokirimV31', 'autokirimV32']; this.hasOldData = keys.some(k => { const d = localStorage.getItem(k); return d && JSON.parse(d).length > 0; }); },
+                async migrateAllData() {
+                    if(!confirm("Pindahkan data lama ke Server?")) return;
+                    const keys = ['autokirimV18', 'autokirimV25', 'autokirimV27', 'autokirimV28', 'autokirimV30', 'autokirimV31', 'autokirimV32'];
+                    let allOldItems = []; keys.forEach(k => { const d = localStorage.getItem(k); if (d) allOldItems = allOldItems.concat(JSON.parse(d)); });
+                    if (allOldItems.length === 0) return alert("Tidak ada data.");
+                    this.isLoading = true; let successCount = 0;
+                    for (let item of allOldItems) {
+                        this.loadingText = `Mengupload ${successCount + 1}/${allOldItems.length}...`;
+                        if(!item.date.includes('-')) { const p = item.date.split('/'); if(p.length === 3) item.date = `${p[2]}-${p[1]}-${p[0]}`; }
+                        if(!item.dayName) { const d = new Date(item.date); const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']; item.dayName = days[d.getDay()]; }
+                        item.admin = this.selectedUser || 'System';
+                        try { await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'add', data: item }) }); successCount++; } catch (e) {}
+                    }
+                    keys.forEach(k => localStorage.removeItem(k)); this.isLoading = false; this.hasOldData = false; alert(`Selesai! ${successCount} data dipindahkan.`); this.refreshData();
+                },
+
+                doLogin() { if(this.loginPass === 'admin123' && this.selectedUser) { this.isLoggedIn = true; sessionStorage.setItem('autokirim_session', 'true'); sessionStorage.setItem('autokirim_user', this.selectedUser); this.refreshData(); this.checkAllOldData(); } else { alert("User belum dipilih atau Password Salah"); this.loginPass = ''; } },
+                logout() { if(confirm('Keluar?')) { this.isLoggedIn = false; sessionStorage.removeItem('autokirim_session'); sessionStorage.removeItem('autokirim_user'); } },
+
+                async refreshData() {
+                    if (!this.apiUrl) return; this.isLoading = true;
+                    try {
+                        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'get' }) });
+                        if(res.ok) {
+                            const data = await res.json();
+                            this.onlineData = data.map(item => {
+                                if(item.date) {
+                                    const d = new Date(item.date);
+                                    if (!isNaN(d.getTime())) {
+                                        item.date = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(d);
+                                        const d2 = new Date(item.date);
+                                        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                        item.dayName = days[d2.getDay()];
+                                    } else if(item.date.length >= 10) item.date = item.date.substring(0, 10);
+                                }
+                                return item;
+                            }).reverse(); 
+                            if(this.currentView === 'dashboard') this.updateCharts();
+                        }
+                    } catch (e) { console.error(e); } this.isLoading = false;
+                },
+
+                async deleteOnlineData(type) {
+                    const dateTarget = this.filterDate || this.getTodayISO();
+                    if (!confirm(type === 'all' ? "YAKIN HAPUS SEMUA?" : `Hapus data tanggal ${this.formatDateID(dateTarget)}?`)) return;
+                    this.showDeleteModal = false; this.isLoading = true; this.loadingText = "Menghapus...";
+                    try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete', type: type, date: dateTarget }) }); const r = await res.json(); if (r.status === 'success') { alert(r.message); this.refreshData(); } else { alert(r.message); } } catch (e) { alert("Error: " + e); } this.isLoading = false;
+                },
+
+                async saveData() {
+                    this.showDetailModal = false; this.isLoading = true; this.loadingText = 'Menyimpan...';
+                    this.tempItem.admin = this.selectedUser;
+                    try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: this.isEditMode ? 'edit' : 'add', data: this.tempItem }) }); const r = await res.json(); if (r.status === 'success') { this.triggerFeedback('success'); await this.refreshData(); } else { alert(r.message); } } catch (e) { alert("Error: " + e); }
+                    this.isLoading = false; if(!this.isCameraActive) document.getElementById('barcodeInput').focus();
+                },
+
+                get filteredData() {
+                    let data = this.onlineData;
+                    if (this.filterDate) data = data.filter(i => i.date === this.filterDate);
+                    if (this.searchQuery) { const q = this.searchQuery.toLowerCase(); data = data.filter(i => String(i.code).toLowerCase().includes(q) || String(i.receiver).toLowerCase().includes(q)); }
+                    if (this.activeFilter !== 'ALL') data = data.filter(i => i.courier === this.activeFilter);
+                    return data;
+                },
+
+                get totalCOD() { return this.filteredData.filter(i => i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); },
+                get totalNonCOD() { return this.filteredData.filter(i => !i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); },
+                get scanStatusClass() { return this.scanStatus === 'success' ? 'flash-success' : (this.scanStatus === 'error' ? 'flash-error' : ''); },
+                getMpColor(mp) { return {'Shopee':'bg-orange-500','Tokopedia':'bg-green-500','Lazada':'bg-blue-600'}[mp] || 'bg-slate-400'; },
+                
+                // NEW: Dynamic Color Strips
+                getCourierColor(c) {
+                    if(c.includes('JNT')) return 'border-red-600';
+                    if(c.includes('JNE') || c.includes('ID')) return 'border-blue-600';
+                    if(c.includes('SPX') || c.includes('Shopee')) return 'border-orange-500';
+                    if(c.includes('Sicepat')) return 'border-purple-600';
+                    if(c.includes('Lazada')) return 'border-blue-400';
+                    if(c.includes('Anteraja')) return 'border-pink-500';
+                    return 'border-gray-300';
+                },
+
+                formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0); },
+                formatDateID(dateString) { if(!dateString) return '-'; const [y, m, d] = dateString.split('-'); return `${d}/${m}/${y}`; },
+                getTodayISO() { const d = new Date(); return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(d); },
+
+                preProcessScan(codeFromCamera = null) {
+                    let code = codeFromCamera || this.barcodeInput.trim();
+                    code = code.toUpperCase().replace(/\s+/g, '');
+                    if(!code) return;
+                    if(this.onlineData.some(i => i.code === code)) { this.triggerFeedback('error'); alert('Resi SUDAH ADA!'); if(!codeFromCamera) this.barcodeInput=''; return; }
+                    this.triggerFeedback('success');
+                    
+                    let finalCourier = this.selectedCourier;
+                    let currentIsCOD = (this.selectedMp === 'Manual') ? this.isCODInput : true;
+                    let defaultPrice = (this.selectedMp === 'Manual' && !currentIsCOD) ? 0 : 0;
+                    const d = new Date();
+                    const dateStr = this.getTodayISO();
+                    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    const dayName = days[d.getDay()];
+                    const fullTime = d.toLocaleTimeString('id-ID', {hour12: false, timeZone: 'Asia/Jakarta'});
+                    this.isEditMode = false;
+                    this.tempItem = { code: code, courier: finalCourier, marketplace: this.selectedMp, isCOD: currentIsCOD, receiver: '', destination: '', weight: '', price: defaultPrice, time: fullTime, date: dateStr, dayName: dayName, admin: this.selectedUser };
+                    setTimeout(() => { this.showDetailModal = true; setTimeout(() => document.getElementById('receiverInput')?.focus(), 100); this.barcodeInput = ''; }, 300);
+                },
+
+                openEditModal(item) { this.isEditMode = true; this.tempItem = JSON.parse(JSON.stringify(item)); this.tempItem.originalCode = item.code; this.showDetailModal = true; },
+                triggerFeedback(type) { this.scanStatus = type; const a = document.getElementById(type === 'success' ? 'beepSuccess' : 'beepError'); if(a) { a.currentTime = 0; a.play().catch(()=>{}); } setTimeout(() => this.scanStatus = 'idle', 800); },
+                
+                toggleCamera() { 
+                    if(this.isCameraActive) { 
+                        if(this.html5QrCode) this.html5QrCode.stop().then(()=>{ this.html5QrCode.clear(); this.isCameraActive = false; }); 
+                    } else { 
+                        this.isCameraActive = true; 
+                        this.$nextTick(()=>{ 
+                            if(!navigator.mediaDevices) return alert("No Camera"); 
+                            const cfg={fps:10, qrbox:{width:320, height:150}, aspectRatio: 1.7}; 
+                            if(!this.html5QrCode) this.html5QrCode=new Html5Qrcode("reader"); 
+                            this.html5QrCode.start({facingMode:"environment"},cfg,(t)=>{if(!this.showDetailModal && this.scanStatus==='idle') this.preProcessScan(t)}).catch(e=>{alert(e);this.isCameraActive=false;}); 
+                        }); 
+                    } 
+                },
+                getSummary() { const c={}; this.filteredData.forEach(i=>{c[i.courier]=(c[i.courier]||0)+1}); return c; },
+                
+                exportExcel() {
+                    const d = this.filteredData; if(d.length===0) return alert("Kosong");
+                    let c="Tanggal,Hari,Jam,Ekspedisi,Resi,Penerima,Tujuan,Status,Nominal,Admin\n";
+                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.destination}",${r.isCOD?'COD':'NON'},${r.price},${r.admin||''}\n`});
+                    const l=document.createElement("a"); l.href="data:text/csv;charset=utf-8,"+encodeURI(c); l.download=`Laporan_${this.filterDate}.csv`; document.body.appendChild(l); l.click(); l.remove();
+                },
+
+                printManifest(cn) {
+                    const d = this.filteredData.filter(i=>i.courier===cn); if(d.length===0) return alert("Kosong");
+                    const tQ=d.length; 
+                    const dateP = this.formatDateID(this.filterDate) || 'SEMUA TANGGAL';
+                    const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+                    const w=window.open('','','width=900,height=600');
+                    w.document.write(`
+                        <html>
+                        <head>
+                            <title>Manifest ${cn}</title>
+                            <style>
+                                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; font-size: 12px; color: #333; }
+                                .company-header { text-align: center; margin-bottom: 15px; }
+                                .company-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; color: #000; }
+                                .company-address { font-size: 14px; color: #000; margin-bottom: 1px; }
+                                .pos-id { font-weight: bold; margin-top: 3px; font-size: 12px; color: #000; }
+                                .report-title { text-align: center; margin: 15px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 8px 0; }
+                                .report-title h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+                                .report-title h3 { margin: 2px 0 0; font-size: 16px; color: #000; font-weight: 800; }
+                                .meta-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 12px; padding: 0 10px; }
+                                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                                th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                                th { background-color: #f3f4f6; text-transform: uppercase; font-size: 10px; font-weight: 700; color: #000; }
+                                td { font-size: 11px; }
+                                .footer { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px; }
+                                .sign-box { text-align: center; width: 200px; }
+                                .sign-line { margin-top: 60px; border-top: 1px solid #000; padding-top: 5px; font-size: 11px; font-weight: bold; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="company-header">
+                                <div class="company-name">AUTOKIRIM TELUK GONG 2</div>
+                                <div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10, Pejagalan, Kec. Penjaringan, Jakarta Utara 14440</div>
+                                <div class="company-address">(Pasar Teluk Gong 2 Uniko 10)</div>
+                                <div class="pos-id">Pickup POS : AK00031858</div>
+                            </div>
+                            
+                            <div class="report-title">
+                                <h2>PICKUP MANIFEST REPORT</h2>
+                                <h3>${cn.toUpperCase()}</h3>
+                            </div>
+
+                            <div class="meta-info">
+                                <div>Waktu Cetak: ${timeP}</div>
+                                <div>Total Paket: ${tQ}</div>
+                            </div>
+
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%; text-align:center;">No</th>
+                                        <th style="width: 25%">No. Resi</th>
+                                        <th style="width: 20%">Marketplace</th>
+                                        <th style="width: 35%">Penerima</th>
+                                        <th style="width: 15%">Tipe</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${d.map((item, index) => `
+                                        <tr>
+                                            <td style="text-align:center">${index + 1}</td>
+                                            <td style="font-family:monospace; font-weight:bold">${item.code}</td>
+                                            <td>${item.marketplace}</td>
+                                            <td>${item.receiver || '-'}</td>
+                                            <td>${item.isCOD ? 'COD' : 'NON-COD'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+
+                            <div class="footer">
+                                <div class="sign-box">
+                                    <p style="margin-bottom: 5px; font-size: 11px;">Diserahkan Oleh,</p>
+                                    <div class="sign-line">Admin / Sender</div>
+                                </div>
+                                <div class="sign-box">
+                                    <p style="margin-bottom: 5px; font-size: 11px;">Diterima Oleh,</p>
+                                    <div class="sign-line">Kurir / Driver</div>
+                                </div>
+                            </div>
+                            <script>window.print(); window.onafterprint = function() { window.close(); }</sc` + `ript>
+                        </body>
+                        </html>
+                    `);
+                    w.document.close();
+                },
+
+                printThermal(i) {
+                    const t = `[C]<b>BUKTI SCAN</b>\n[L]Tgl:${this.formatDateID(i.date)} ${i.time}\n--------------------------------\n[L]Resi:${i.code}\n[L]Kurir:${i.courier}\n[L]Tipe:${i.isCOD?'COD':'NON'}\n[L]Rp:${this.formatRupiah(i.price)}\n--------------------------------\n[C]${i.receiver||'-'}\n[C]${i.destination||'-'}\n\n\n`;
+                    window.location.href='rawbt:base64,'+btoa(t);
+                },
+                shareToWA() {
+                    if(this.filteredData.length===0) return alert("Kosong");
+                    let t = `*LAPORAN AUTOKIRIM*\nTgl: ${this.formatDateID(this.filterDate)}\nTotal: ${this.filteredData.length}\nCOD: ${this.formatRupiah(this.totalCOD)}\nNON: ${this.formatRupiah(this.totalNonCOD)}\n\n`;
+                    const s = this.getSummary(); for(const [k,v] of Object.entries(s)) t+=`- ${k}: ${v}\n`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,'_blank');
+                },
+                toggleView() { this.currentView = this.currentView==='home'?'dashboard':'home'; if(this.currentView==='dashboard') this.$nextTick(()=>this.initCharts()); },
+                getAdminStats() { const s={}; this.filteredData.forEach(i=>{const a=i.admin||'Unknown'; s[a]=(s[a]||0)+1;}); return s; },
+                
+                initCharts() { this.updateCharts(); },
+                updateCharts() {
+                    if(this.currentView!=='dashboard') return;
+                    const s = this.getSummary();
+                    
+                    if(this.courierChart) this.courierChart.destroy(); 
+                    if(this.paymentChart) this.paymentChart.destroy();
+                    
+                    const ctx1 = document.getElementById('courierChart'); 
+                    if(ctx1) {
+                        this.courierChart = new Chart(ctx1, {
+                            type: 'doughnut',
+                            data: {
+                                labels: Object.keys(s),
+                                datasets: [{
+                                    data: Object.values(s),
+                                    backgroundColor: ['#ef4444','#f97316','#22c55e','#3b82f6','#a855f7','#ec4899','#64748b'],
+                                    borderWidth: 0,
+                                    hoverOffset: 15
+                                }]
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                cutout: '75%',
+                                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 10 } } } }
+                            }
+                        });
+                    }
+
+                    const c = this.filteredData.filter(i=>i.isCOD).length; 
+                    const n = this.filteredData.length - c;
+                    const ctx2 = document.getElementById('paymentChart'); 
+                    if(ctx2) {
+                        this.paymentChart = new Chart(ctx2, {
+                            type: 'bar',
+                            data: {
+                                labels: ['COD','Non-COD'],
+                                datasets: [{
+                                    label: 'Total Paket',
+                                    data: [c,n],
+                                    backgroundColor: ['#22c55e','#3b82f6'],
+                                    borderRadius: 12,
+                                    barThickness: 60
+                                }]
+                            },
+                            options: {
+                                maintainAspectRatio: false,
+                                scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } },
+                                plugins: { legend: { display: false } }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
