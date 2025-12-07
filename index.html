@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Autokirim V88 (Final Complete)</title>
+    <title>Autokirim Barcode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -73,8 +73,6 @@
                         <option value="" disabled>-- Siapa kamu? --</option>
                         <option value="Admin">Admin Utama</option>
                         <option value="Erika">Erika</option>
-                        <option value="Karyawan 1">Karyawan 1</option>
-                        <option value="Karyawan 2">Karyawan 2</option>
                     </select>
                     <i class="fas fa-chevron-down select-arrow text-sm"></i>
                 </div>
@@ -170,7 +168,7 @@
                 </div>
 
                 <div class="mt-2 flex items-center justify-between bg-slate-100 p-2 rounded-xl" x-show="currentView === 'home'">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mode Tembak</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase ml-1">Scan Massal</span>
                     <button @click="isBatchMode = !isBatchMode" class="text-[10px] px-3 py-1.5 rounded-lg font-bold transition-all" :class="isBatchMode ? 'bg-rose-600 text-white shadow-md' : 'bg-white text-slate-400 shadow-sm'">
                         <i class="fas" :class="isBatchMode ? 'fa-bolt' : 'fa-toggle-off'"></i> <span x-text="isBatchMode ? 'ON' : 'OFF'"></span>
                     </button>
@@ -601,7 +599,7 @@
 
         function appData() {
             return {
-                apiUrl: 'https://script.google.com/macros/s/AKfycbxAaZYtThlKWkbwn6vsUS-f5EnJTM4rbx1ZtVP6Ap74_D-wM_BrQflCpJPrY9gbBrThmQ/exec',
+                apiUrl: 'https://script.google.com/macros/s/AKfycbycK0Cs1po0BNfKivkrRrOtH_YiFZuBjq1dS91vnXi2-dBLTa08n5qTMhxgAlVMWJWnFw/exec',
                 isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
                 selectedUser: sessionStorage.getItem('autokirim_user') || '',
                 loginPass: '', isLoading: false, loadingText: 'Menghubungkan...',
@@ -610,7 +608,7 @@
                 showQrModal: false, isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null, selectedRows: [],
                 pcLinkEnabled: localStorage.getItem('pcLinkEnabled') === 'true', pcIpAddress: localStorage.getItem('pcIpAddress') || '',
 
-                couriers: ['JNT Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'JNT Cargo'],
+                couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo', 'Lion Parcel', 'SAPX', 'Sentral Cargo'],
                 marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
                 selectedCourier: 'JNT Express', selectedMp: 'Shopee', barcodeInput: '', 
                 isCameraActive: false, html5QrCode: null, showDetailModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
