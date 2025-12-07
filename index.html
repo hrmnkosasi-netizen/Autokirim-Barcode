@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Autokirim V90 (Financial Edition)</title>
+    <title>Autokirim Barcode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -64,17 +64,15 @@
         <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-900/90 backdrop-blur-sm"></div>
         <div class="bg-white/95 backdrop-blur rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center modal-enter relative z-10 border border-white/20">
             <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-5 text-white shadow-lg shadow-purple-500/30 transform rotate-3"><i class="fas fa-rocket text-3xl"></i></div>
-            <h1 class="text-2xl font-extrabold text-slate-800 mb-1">AUTOKIRIM V90</h1>
-            <p class="text-sm text-slate-500 mb-8 font-medium">Financial Edition (Cuan Calculator)</p>
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-1">AUTOKIRIM BARCODE</h1>
+            <p class="text-sm text-slate-500 mb-8 font-medium">Developed by Yarch</p>
             <form @submit.prevent="doLogin">
                 <div class="mb-4 text-left select-wrapper">
                     <label class="text-[11px] font-bold text-slate-400 uppercase ml-1 mb-1 block tracking-wider">Pilih User</label>
                     <select x-model="selectedUser" class="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 p-3.5 rounded-xl font-bold text-slate-700 outline-none transition-all cursor-pointer">
-                        <option value="" disabled>-- Siapa kamu? --</option>
+                        <option value="" disabled>-- Woi, Nama kamu siapa? --</option>
                         <option value="Admin">Admin Utama</option>
                         <option value="Erika">Erika</option>
-                        <option value="Karyawan 1">Karyawan 1</option>
-                        <option value="Karyawan 2">Karyawan 2</option>
                     </select>
                     <i class="fas fa-chevron-down select-arrow text-sm"></i>
                 </div>
@@ -347,7 +345,7 @@
             
             <div x-show="['Admin','Erika'].includes(selectedUser)" class="mb-6 bg-gradient-to-r from-yellow-400 to-amber-500 p-6 rounded-2xl shadow-lg text-white flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold text-amber-100 uppercase tracking-widest mb-1">Estimasi Cuan Hari Ini</p>
+                    <p class="text-xs font-bold text-amber-100 uppercase tracking-widest mb-1">Estimasi Profit Hari Ini</p>
                     <h2 class="text-4xl font-extrabold" x-text="formatRupiah(totalProfit)"></h2>
                 </div>
                 <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm"><i class="fas fa-coins text-3xl"></i></div>
@@ -618,7 +616,7 @@
 
         function appData() {
             return {
-                apiUrl: 'https://script.google.com/macros/s/AKfycbxAaZYtThlKWkbwn6vsUS-f5EnJTM4rbx1ZtVP6Ap74_D-wM_BrQflCpJPrY9gbBrThmQ/exec',
+                apiUrl: 'https://script.google.com/macros/s/AKfycbwSPfiSMR9OpAKmiNzsi8_Tbk9PrTev1ihgXSXZgoSYsr00Zvd0BlIYEDN2wmHFuHtdhQ/exec',
                 isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
                 selectedUser: sessionStorage.getItem('autokirim_user') || '',
                 loginPass: '', isLoading: false, loadingText: 'Menghubungkan...',
@@ -627,7 +625,7 @@
                 showQrModal: false, isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null, selectedRows: [],
                 pcLinkEnabled: localStorage.getItem('pcLinkEnabled') === 'true', pcIpAddress: localStorage.getItem('pcIpAddress') || '',
 
-                couriers: ['JNT Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'JNT Cargo'],
+                couriers: ['JNT Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'JNT Cargo', 'Lion Parcel', 'SAPX', 'Sentral Cargo'],
                 marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
                 selectedCourier: 'JNT Express', selectedMp: 'Shopee', barcodeInput: '', 
                 isCameraActive: false, html5QrCode: null, showDetailModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
@@ -647,11 +645,11 @@
 
                 // COMMISSION CONFIG
                 commissionRates: {
-                    'JNT Express': 0.15,
+                    'JNT Express': 0.25,
                     'JNE Express': 0.15,
-                    'ID Express': 0.10,
-                    'Sicepat': 0.10,
-                    'SPX': 0.10,
+                    'ID Express': 0.30,
+                    'Sicepat': 0.20,
+                    'SPX': 0.20,
                     'Default': 0.10
                 },
 
@@ -1092,7 +1090,7 @@
                     .sign-box { text-align: center; width: 45%; } 
                     .sign-line { margin-top: 50px; border-top: 1px solid #000; padding-top: 5px; font-size: 11px; font-weight: bold; width: 100%; } 
                     .printed-by { text-align: center; font-size: 11px; margin-top: 20px; font-style: italic; color: #555; } 
-                    </style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 35%">No. Resi</th><th style="width: 30%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => `<tr><td style="text-align:center">${index + 1}</td><td class="resi-col">${item.code}<br><span style="font-size:9px; color:#555;">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${item.marketplace}</td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
+                    </style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10, Penjaringan, Jakarta Barat 14440</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 35%">No. Resi</th><th style="width: 30%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => `<tr><td style="text-align:center">${index + 1}</td><td class="resi-col">${item.code}<br><span style="font-size:9px; color:#555;">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${item.marketplace}</td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
                     w.document.close();
                 },
 
