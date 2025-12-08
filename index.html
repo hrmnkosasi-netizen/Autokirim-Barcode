@@ -176,7 +176,7 @@
                 </div>
 
                 <div class="mt-2 flex items-center justify-between bg-slate-100 p-2 rounded-xl" x-show="currentView === 'home'">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mode Tembak</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase ml-1">Scan Massal</span>
                     <button @click="isBatchMode = !isBatchMode" class="text-[10px] px-3 py-1.5 rounded-lg font-bold transition-all" :class="isBatchMode ? 'bg-rose-600 text-white shadow-md' : 'bg-white text-slate-400 shadow-sm'">
                         <i class="fas" :class="isBatchMode ? 'fa-bolt' : 'fa-toggle-off'"></i> <span x-text="isBatchMode ? 'ON' : 'OFF'"></span>
                     </button>
@@ -630,7 +630,7 @@
                 showQrModal: false, isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null, selectedRows: [],
                 pcLinkEnabled: localStorage.getItem('pcLinkEnabled') === 'true', pcIpAddress: localStorage.getItem('pcIpAddress') || '',
 
-                couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo','Lion Parcel (Reg Pack)','Lion Parcel (Jago Pack)', 'SAPX', 'Sentral Cargo', Paxel', 'POS Aja],
+                couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo','Lion Parcel (Reg Pack)','Lion Parcel (Jago Pack)', 'SAPX', 'Sentral Cargo', 'Paxel', 'POS Aja'],
                 marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
                 selectedCourier: 'JNT Express', selectedMp: 'Shopee', barcodeInput: '', 
                 isCameraActive: false, html5QrCode: null, showDetailModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
