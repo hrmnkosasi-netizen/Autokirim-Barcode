@@ -64,13 +64,13 @@
         <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/90 to-purple-900/90 backdrop-blur-sm"></div>
         <div class="bg-white/95 backdrop-blur rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center modal-enter relative z-10 border border-white/20">
             <div class="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-5 text-white shadow-lg shadow-purple-500/30 transform rotate-3"><i class="fas fa-rocket text-3xl"></i></div>
-            <h1 class="text-2xl font-extrabold text-slate-800 mb-1">AUTOKIRIM BARCODE</h1>
-            <p class="text-sm text-slate-500 mb-8 font-medium">Developed by Yarch</p>
+            <h1 class="text-2xl font-extrabold text-slate-800 mb-1">AUTOKIRIM SCANNER</h1>
+            <p class="text-sm text-slate-500 mb-8 font-medium">Develop by Yarch</p>
             <form @submit.prevent="doLogin">
                 <div class="mb-4 text-left select-wrapper">
                     <label class="text-[11px] font-bold text-slate-400 uppercase ml-1 mb-1 block tracking-wider">Pilih User</label>
                     <select x-model="selectedUser" class="w-full bg-slate-50 border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 p-3.5 rounded-xl font-bold text-slate-700 outline-none transition-all cursor-pointer">
-                        <option value="" disabled>-- Woi, Nama kamu siapa? --</option>
+                        <option value="" disabled>-- Siapa kamu? --</option>
                         <option value="Admin">Admin Utama</option>
                         <option value="Erika">Erika</option>
                     </select>
@@ -100,7 +100,7 @@
                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div class="flex items-center gap-3 relative z-10">
                     <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/30 shadow-lg"><i class="fas fa-rocket text-lg"></i></div>
-                    <div><h1 class="font-extrabold text-lg tracking-tight drop-shadow-md">AUTOKIRIM</h1><p class="text-xs font-medium text-white/80">V90 Financial</p></div>
+                    <div><h1 class="font-extrabold text-lg tracking-tight drop-shadow-md">AUTOKIRIM</h1><p class="text-xs font-medium text-white/80">Scanner</p></div>
                 </div>
                 <div class="relative z-10 flex gap-2">
                     <button @click="showQrModal = true" class="w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-all border border-white/30 shadow-sm" title="QR Login"><i class="fas fa-qrcode"></i></button>
@@ -176,7 +176,7 @@
                 </div>
 
                 <div class="mt-2 flex items-center justify-between bg-slate-100 p-2 rounded-xl" x-show="currentView === 'home'">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase ml-1">Scan Massal</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase ml-1">Mode Tembak</span>
                     <button @click="isBatchMode = !isBatchMode" class="text-[10px] px-3 py-1.5 rounded-lg font-bold transition-all" :class="isBatchMode ? 'bg-rose-600 text-white shadow-md' : 'bg-white text-slate-400 shadow-sm'">
                         <i class="fas" :class="isBatchMode ? 'fa-bolt' : 'fa-toggle-off'"></i> <span x-text="isBatchMode ? 'ON' : 'OFF'"></span>
                     </button>
@@ -291,9 +291,10 @@
                                         <div class="inline-block bg-slate-50 border border-slate-100 px-2 py-1 rounded mb-2 w-full">
                                             <div class="text-sm font-bold text-slate-800 font-mono tracking-wide break-all leading-tight group-hover:text-rose-600 transition-colors" x-text="item.code"></div>
                                         </div>
-                                        <div class="flex flex-wrap gap-1.5">
+                                        <div class="flex flex-wrap gap-1.5 items-center">
                                             <span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200" x-text="item.courier"></span>
                                             <span class="text-[9px] font-bold text-white px-2 py-0.5 rounded shadow-sm" :class="getMpColor(item.marketplace)" x-text="item.marketplace"></span>
+                                            <div x-show="item.photoUrl" @click.stop="window.open(item.photoUrl, '_blank')" class="text-blue-500 bg-blue-50 hover:bg-blue-100 p-1 rounded cursor-pointer"><i class="fas fa-image"></i></div>
                                         </div>
                                     </td>
                                     <td class="p-4 align-top text-right">
@@ -407,9 +408,73 @@
         </main>
     </div>
 
+    <div x-show="showDetailModal" class="fixed inset-0 bg-slate-900/90 z-[100] flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto" x-cloak>
+        <div class="bg-white w-full md:max-w-md rounded-3xl shadow-2xl overflow-hidden modal-enter mt-4 md:mt-10 mb-20 relative">
+            <div class="bg-slate-900 p-5 text-white flex justify-between items-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-rose-600 to-orange-600 opacity-90"></div>
+                <h3 class="font-bold flex items-center gap-2 relative z-10 text-lg"><i class="fas" :class="isEditMode ? 'fa-edit' : 'fa-cloud-upload-alt'"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Konfirmasi Paket'"></span></h3>
+                <button @click="printStruk(tempItem)" class="text-[10px] bg-white text-rose-600 px-3 py-1.5 rounded-full font-bold hover:bg-slate-100 relative z-10 shadow-lg"><i class="fas fa-print mr-1"></i> STRUK</button>
+            </div>
+            <div class="p-6 space-y-4 bg-slate-50">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full" :class="getCourierColor(tempItem.courier).replace('border-l-[6px]', 'bg')"></div>
+                    <p class="text-xl font-mono font-bold text-slate-800 break-all" x-text="tempItem.code"></p>
+                    <div class="flex justify-center gap-2 mt-3">
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200" x-text="tempItem.courier"></span>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-slate-600 border border-slate-200 shadow-sm" x-text="tempItem.marketplace"></span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center gap-2">
+                    <button @click="tempItem.method = 'Pick Up'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Pick Up' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-400 border-slate-200'">PICK UP</button>
+                    <button @click="tempItem.method = 'Drop Off'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Drop Off' ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white text-slate-400 border-slate-200'">DROP OFF</button>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bukti Foto</label>
+                        <span x-show="tempItem.photoBase64" class="text-[9px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded">Foto Diambil</span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <div x-show="tempItem.photoBase64" class="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 cursor-pointer" @click="window.open(tempItem.photoBase64)">
+                            <img :src="tempItem.photoBase64" class="w-full h-full object-cover">
+                        </div>
+                        
+                        <label class="flex-1 cursor-pointer">
+                            <div class="w-full h-full min-h-[40px] border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors text-slate-400 hover:text-slate-600">
+                                <i class="fas fa-camera"></i> <span class="text-xs font-bold">Ambil Foto</span>
+                            </div>
+                            <input type="file" accept="image/*" capture="environment" class="hidden" @change="processPhoto($event)">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jenis & Ongkir</label>
+                        <div class="flex bg-slate-100 rounded-lg p-1">
+                            <button @click="tempItem.isCOD = true" class="text-[10px] font-bold px-3 py-1 rounded-md transition-all" :class="tempItem.isCOD ? 'bg-white text-green-600 shadow-sm' : 'text-slate-400'">COD</button>
+                            <button @click="tempItem.isCOD = false" class="text-[10px] font-bold px-3 py-1 rounded-md transition-all" :class="!tempItem.isCOD ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'">NON</button>
+                        </div>
+                    </div>
+                    <input type="number" x-model="tempItem.price" class="w-full text-3xl font-bold text-center outline-none bg-transparent border-b border-slate-200 pb-2">
+                </div>
+                <input type="text" x-model="tempItem.receiver" class="w-full p-4 text-sm border border-slate-200 rounded-xl" placeholder="Nama Penerima">
+                <div class="flex gap-3">
+                    <input type="text" x-model="tempItem.destination" class="w-full p-4 text-sm border border-slate-200 rounded-xl" placeholder="Kota Tujuan">
+                    <input type="text" x-model="tempItem.weight" class="w-24 p-4 text-sm border border-slate-200 rounded-xl text-center" placeholder="Kg">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button @click="showDetailModal = false" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Batal</button>
+                    <button @click="saveData()" class="flex-[2] bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-700 hover:to-orange-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-500/30 transition-all transform active:scale-95" x-text="isEditMode ? 'UPDATE DATA' : 'SIMPAN DATA'"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div x-show="showManifestManager" class="fixed inset-0 bg-slate-900/90 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col overflow-hidden modal-enter relative">
-            
             <div class="bg-slate-900 p-4 text-white flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="bg-rose-600 p-2 rounded-lg"><i class="fas fa-print"></i></div>
@@ -417,16 +482,10 @@
                 </div>
                 <button @click="showManifestManager = false" class="text-slate-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
             </div>
-
             <div class="flex border-b border-slate-200 bg-slate-50 p-2 gap-2 shrink-0">
-                <button @click="manifestTab = 'new'" class="flex-1 py-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2" :class="manifestTab === 'new' ? 'bg-white text-rose-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'">
-                    <i class="fas fa-plus-circle"></i> BUAT BARU
-                </button>
-                <button @click="manifestTab = 'history'" class="flex-1 py-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2" :class="manifestTab === 'history' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'">
-                    <i class="fas fa-history"></i> RIWAYAT
-                </button>
+                <button @click="manifestTab = 'new'" class="flex-1 py-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2" :class="manifestTab === 'new' ? 'bg-white text-rose-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'"><i class="fas fa-plus-circle"></i> BUAT BARU</button>
+                <button @click="manifestTab = 'history'" class="flex-1 py-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2" :class="manifestTab === 'history' ? 'bg-white text-blue-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-100'"><i class="fas fa-history"></i> RIWAYAT</button>
             </div>
-
             <div x-show="manifestTab === 'new'" class="flex-1 flex flex-col overflow-hidden bg-white">
                 <div class="p-4 border-b border-slate-100 bg-white grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0">
                     <div class="select-wrapper">
@@ -448,7 +507,6 @@
                         <button @click="selectAllManifestItems()" class="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-bold transition-all">Pilih Semua</button>
                     </div>
                 </div>
-
                 <div class="flex-1 overflow-y-auto p-2 bg-slate-50/50">
                     <template x-for="item in getPendingItems()" :key="item.code">
                         <div class="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl mb-2 hover:shadow-sm transition-all cursor-pointer" @click="toggleManifestItem(item.code)">
@@ -473,15 +531,11 @@
                         <span class="text-xs font-bold">Semua paket tanggal ini sudah diproses.</span>
                     </div>
                 </div>
-
                 <div class="p-4 bg-white border-t border-slate-200 shrink-0 flex justify-between items-center">
                     <span class="text-xs font-bold text-slate-500">Terpilih: <span class="text-rose-600 text-lg" x-text="selectedManifestItems.length"></span></span>
-                    <button @click="createManifest()" :disabled="selectedManifestItems.length === 0" class="bg-rose-600 hover:bg-rose-700 disabled:bg-slate-300 text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg shadow-rose-500/30 transition-all flex items-center gap-2">
-                        <i class="fas fa-print"></i> PROSES & PRINT
-                    </button>
+                    <button @click="createManifest()" :disabled="selectedManifestItems.length === 0" class="bg-rose-600 hover:bg-rose-700 disabled:bg-slate-300 text-white px-6 py-3 rounded-xl font-bold text-xs shadow-lg shadow-rose-500/30 transition-all flex items-center gap-2"><i class="fas fa-print"></i> PROSES & PRINT</button>
                 </div>
             </div>
-
              <div x-show="manifestTab === 'history'" class="flex-1 flex flex-col overflow-hidden bg-slate-50">
                 <div class="flex-1 overflow-y-auto p-4 space-y-3">
                     <div x-show="isLoading" class="text-center py-4 text-xs font-bold text-slate-400 animate-pulse">Memuat riwayat...</div>
@@ -496,12 +550,8 @@
                                     <p class="text-[10px] text-slate-400 mt-1" x-text="new Date(hist.timestamp).toLocaleString('id-ID')"></p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button @click="reprintManifest(hist)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-blue-100 transition-all">
-                                        <i class="fas fa-print mr-1"></i> REPRINT
-                                    </button>
-                                    <button @click="deleteManifest(hist)" class="bg-red-50 hover:bg-red-100 text-red-600 w-8 rounded-lg border border-red-100 flex items-center justify-center transition-all shadow-sm">
-                                        <i class="fas fa-trash-alt text-xs"></i>
-                                    </button>
+                                    <button @click="reprintManifest(hist)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-blue-100 transition-all"><i class="fas fa-print mr-1"></i> REPRINT</button>
+                                    <button @click="deleteManifest(hist)" class="bg-red-50 hover:bg-red-100 text-red-600 w-8 rounded-lg border border-red-100 flex items-center justify-center transition-all shadow-sm"><i class="fas fa-trash-alt text-xs"></i></button>
                                 </div>
                             </div>
                             <div class="text-[10px] text-slate-500 bg-slate-50 p-2 rounded font-mono break-all whitespace-normal border border-slate-100 leading-relaxed" x-text="hist.items.join(', ')"></div>
@@ -545,51 +595,6 @@
         </div>
     </div>
 
-    <div x-show="showDetailModal" class="fixed inset-0 bg-slate-900/90 z-[100] flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto" x-cloak>
-        <div class="bg-white w-full md:max-w-md rounded-3xl shadow-2xl overflow-hidden modal-enter mt-4 md:mt-10 mb-20 relative">
-            <div class="bg-slate-900 p-5 text-white flex justify-between items-center relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-r from-rose-600 to-orange-600 opacity-90"></div>
-                <h3 class="font-bold flex items-center gap-2 relative z-10 text-lg"><i class="fas" :class="isEditMode ? 'fa-edit' : 'fa-cloud-upload-alt'"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Konfirmasi Paket'"></span></h3>
-                <button @click="printStruk(tempItem)" class="text-[10px] bg-white text-rose-600 px-3 py-1.5 rounded-full font-bold hover:bg-slate-100 relative z-10 shadow-lg"><i class="fas fa-print mr-1"></i> STRUK</button>
-            </div>
-            <div class="p-6 space-y-4 bg-slate-50">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full" :class="getCourierColor(tempItem.courier).replace('border-l-[6px]', 'bg')"></div>
-                    <p class="text-xl font-mono font-bold text-slate-800 break-all" x-text="tempItem.code"></p>
-                    <div class="flex justify-center gap-2 mt-3">
-                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200" x-text="tempItem.courier"></span>
-                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-slate-600 border border-slate-200 shadow-sm" x-text="tempItem.marketplace"></span>
-                    </div>
-                </div>
-                
-                <div class="flex justify-center gap-2">
-                    <button @click="tempItem.method = 'Pick Up'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Pick Up' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-400 border-slate-200'">PICK UP</button>
-                    <button @click="tempItem.method = 'Drop Off'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Drop Off' ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white text-slate-400 border-slate-200'">DROP OFF</button>
-                </div>
-
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-3">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jenis & Ongkir</label>
-                        <div class="flex bg-slate-100 rounded-lg p-1">
-                            <button @click="tempItem.isCOD = true" class="text-[10px] font-bold px-3 py-1 rounded-md transition-all" :class="tempItem.isCOD ? 'bg-white text-green-600 shadow-sm' : 'text-slate-400'">COD</button>
-                            <button @click="tempItem.isCOD = false" class="text-[10px] font-bold px-3 py-1 rounded-md transition-all" :class="!tempItem.isCOD ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'">NON</button>
-                        </div>
-                    </div>
-                    <input type="number" x-model="tempItem.price" class="w-full text-3xl font-bold text-center outline-none bg-transparent border-b border-slate-200 pb-2">
-                </div>
-                <input type="text" x-model="tempItem.receiver" class="w-full p-4 text-sm border border-slate-200 rounded-xl" placeholder="Nama Penerima">
-                <div class="flex gap-3">
-                    <input type="text" x-model="tempItem.destination" class="w-full p-4 text-sm border border-slate-200 rounded-xl" placeholder="Kota Tujuan">
-                    <input type="text" x-model="tempItem.weight" class="w-24 p-4 text-sm border border-slate-200 rounded-xl text-center" placeholder="Kg">
-                </div>
-                <div class="flex gap-3 mt-6">
-                    <button @click="showDetailModal = false" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Batal</button>
-                    <button @click="saveData()" class="flex-[2] bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-700 hover:to-orange-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-rose-500/30 transition-all transform active:scale-95" x-text="isEditMode ? 'UPDATE DATA' : 'SIMPAN DATA'"></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <audio id="beepSuccess" src="https://www.soundjay.com/button/beep-07.wav"></audio>
     <audio id="beepError" src="https://www.soundjay.com/button/beep-10.wav"></audio>
 
@@ -616,7 +621,7 @@
 
         function appData() {
             return {
-                apiUrl: 'https://script.google.com/macros/s/AKfycbwSPfiSMR9OpAKmiNzsi8_Tbk9PrTev1ihgXSXZgoSYsr00Zvd0BlIYEDN2wmHFuHtdhQ/exec',
+                apiUrl: 'https://script.google.com/macros/s/AKfycbyopKlS8z0PIlgm-1otLuuoR1bDICfxdPV7rJdT8BQk9_VfcnY0gPNxRRYFcw3Z_chq9g/exec',
                 isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
                 selectedUser: sessionStorage.getItem('autokirim_user') || '',
                 loginPass: '', isLoading: false, loadingText: 'Menghubungkan...',
@@ -625,7 +630,7 @@
                 showQrModal: false, isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null, selectedRows: [],
                 pcLinkEnabled: localStorage.getItem('pcLinkEnabled') === 'true', pcIpAddress: localStorage.getItem('pcIpAddress') || '',
 
-                couriers: ['JNT Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'JNT Cargo', 'Lion Parcel', 'SAPX', 'Sentral Cargo'],
+                couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo','Lion Parcel (Reg Pack)','Lion Parcel (Jago Pack)', 'SAPX', 'Sentral Cargo', Paxel', 'POS Aja],
                 marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
                 selectedCourier: 'JNT Express', selectedMp: 'Shopee', barcodeInput: '', 
                 isCameraActive: false, html5QrCode: null, showDetailModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
@@ -643,32 +648,17 @@
                 processedResis: [],
                 selectedManifestItems: [],
 
-                // COMMISSION CONFIG
-                commissionRates: {
-                    'JNT Express': 0.25,
-                    'JNE Express': 0.15,
-                    'ID Express': 0.30,
-                    'Sicepat': 0.20,
-                    'SPX': 0.20,
-                    'Default': 0.10
-                },
+                commissionRates: { 'J&T Express': 0.25,'J&T Cargo': 0.25, 'JNE Express': 0.15, 'ID Express': 0.25, 'Sicepat': 0.20, 'SPX': 0.20, 'Paxel': 0.07, 'Lion Parcel (Reg Pack)': 0.15, 'Lion Parcel (Jago Pack)': 0.05, 'Ninja': 0.20, 'Pos Aja': 0.07, 'Anteraja': 0.30, 'Lazada Lex': 0.20, 'SAPX': 0.25, 'Default': 0.10 },
 
                 initApp() { 
                     this.filterDate = this.getJakartaDateISO();
                     this.manifestFilterDate = this.getJakartaDateISO();
-                    if(this.isLoggedIn) { 
-                        this.refreshData(); 
-                        this.checkAllOldData(); 
-                        this.fetchManifestHistory(); 
-                    }
+                    if(this.isLoggedIn) { this.refreshData(); this.checkAllOldData(); this.fetchManifestHistory(); }
                     this.$watch('pcLinkEnabled', val => localStorage.setItem('pcLinkEnabled', val));
                     this.$watch('pcIpAddress', val => localStorage.setItem('pcIpAddress', val));
                 },
                 
-                getJakartaDateISO() {
-                    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-                },
-
+                getJakartaDateISO() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); },
                 checkAllOldData() { const keys = ['autokirimV18', 'autokirimV25', 'autokirimV27', 'autokirimV28', 'autokirimV30', 'autokirimV31', 'autokirimV32']; this.hasOldData = keys.some(k => { const d = localStorage.getItem(k); return d && JSON.parse(d).length > 0; }); },
                 async migrateAllData() { /* Migration Logic */ },
                 
@@ -681,21 +671,17 @@
                         if(r.status === 'success') {
                              this.isLoggedIn = true; sessionStorage.setItem('autokirim_session', 'true'); sessionStorage.setItem('autokirim_user', this.selectedUser); this.refreshData(); this.fetchManifestHistory();
                         } else {
+                             // Fallback
                              const fallbackCreds = { 'Admin': 'admin12', 'Erika': 'erika123', 'Karyawan 1': '12345', 'Karyawan 2': '12345' };
                              if(fallbackCreds[this.selectedUser] && fallbackCreds[this.selectedUser] === this.loginPass) {
                                 this.isLoggedIn = true; sessionStorage.setItem('autokirim_session', 'true'); sessionStorage.setItem('autokirim_user', this.selectedUser); this.refreshData(); this.fetchManifestHistory();
-                             } else {
-                                alert("Password Salah!");
-                                this.loginPass = '';
-                             }
+                             } else { alert("Password Salah!"); this.loginPass = ''; }
                         }
                     } catch(e) {
                          const fallbackCreds = { 'Admin': 'admin12', 'Erika': 'erika123', 'Karyawan 1': '12345', 'Karyawan 2': '12345' };
                          if(fallbackCreds[this.selectedUser] && fallbackCreds[this.selectedUser] === this.loginPass) {
                             this.isLoggedIn = true; sessionStorage.setItem('autokirim_session', 'true'); sessionStorage.setItem('autokirim_user', this.selectedUser); this.refreshData(); this.fetchManifestHistory();
-                         } else {
-                            alert("Gagal Login: Cek Internet/Server");
-                         }
+                         } else { alert("Gagal Login: Cek Internet/Server"); }
                     }
                     this.isLoading = false;
                 },
@@ -705,9 +691,7 @@
                     if(!dateStr) return '';
                     if(dateStr.includes('T')) {
                         const d = new Date(dateStr);
-                        return new Intl.DateTimeFormat('en-CA', { 
-                            timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' 
-                        }).format(d);
+                        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
                     }
                     return dateStr.substring(0, 10);
                 },
@@ -741,13 +725,46 @@
                            if(r.status === 'success') {
                                this.manifestHistory = r.data;
                                let processed = [];
-                               this.manifestHistory.forEach(h => {
-                                   processed = [...processed, ...h.items];
-                               });
+                               this.manifestHistory.forEach(h => { processed = [...processed, ...h.items]; });
                                this.processedResis = processed;
                            }
                        }
                    } catch(e) { console.log('Manifest Fetch Error', e); }
+                },
+
+                // PHOTO LOGIC
+                processPhoto(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    // Compress Image using Canvas
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            // Max Width 800px (Balance quality vs upload speed)
+                            const MAX_WIDTH = 800;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            // To Base64 (JPEG quality 0.7)
+                            this.tempItem.photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
                 },
 
                 async deleteOnlineData(type) { 
@@ -760,10 +777,9 @@
                 async saveData() {
                     this.showDetailModal = false; 
                     this.isLoading = true;
-                    this.loadingText = this.isEditMode ? 'Mengupdate Data...' : 'Menyimpan Data...';
+                    this.loadingText = this.isEditMode ? 'Mengupdate Data...' : 'Menyimpan (Upload Foto)...'; // Text Update
                     this.tempItem.admin = this.selectedUser;
                     
-                    // CALCULATE PROFIT
                     const rate = this.commissionRates[this.tempItem.courier] || this.commissionRates['Default'];
                     this.tempItem.profit = Math.round((parseInt(this.tempItem.price) || 0) * rate);
 
@@ -785,6 +801,7 @@
                     this.isEditMode = true; 
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.originalCode = item.code; 
+                    this.tempItem.photoBase64 = null; // Reset temp photo on edit open
                     
                     if(this.tempItem.marketplace.includes('(Pick Up)')) {
                         this.tempItem.method = 'Pick Up';
@@ -804,10 +821,8 @@
                     this.isLoading = true; let successCount = 0;
                     for (let i = 0; i < this.batchQueue.length; i++) {
                         const item = this.batchQueue[i];
-                        // Calc Profit for Batch
                         const rate = this.commissionRates[item.courier] || this.commissionRates['Default'];
                         item.profit = Math.round((parseInt(item.price) || 0) * rate);
-
                         this.loadingText = `Menyimpan ${i + 1} / ${this.batchQueue.length}...`;
                         try { await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'add', data: item }) }); successCount++; } catch (e) { console.error(e); }
                     }
@@ -824,9 +839,7 @@
 
                 get totalCOD() { return this.filteredData.filter(i => i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); },
                 get totalNonCOD() { return this.filteredData.filter(i => !i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); },
-                // NEW PROFIT CALCULATION
                 get totalProfit() { return this.filteredData.reduce((acc, curr) => acc + (parseInt(curr.profit) || 0), 0); },
-                
                 get scanStatusClass() { return this.scanStatus === 'success' ? 'flash-success' : (this.scanStatus === 'error' ? 'flash-error' : ''); },
                 getMpColor(mp) { return {'Shopee':'bg-orange-500','Tokopedia':'bg-green-500','Lazada':'bg-blue-600'}[mp] || 'bg-slate-400'; },
                 getCourierColor(c) {
@@ -840,43 +853,24 @@
                 },
 
                 formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0); },
-                
                 formatDateID(dateString) { 
                     if(!dateString) return '-'; 
                     const parts = dateString.split('-');
                     if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
                     return dateString; 
                 },
-                
-                getTodayISO() { 
-                    return this.getJakartaDateISO();
-                },
-
-                toggleAll(e) {
-                    if (e.target.checked) {
-                        this.selectedRows = this.filteredData.map(item => item.code);
-                    } else {
-                        this.selectedRows = [];
-                    }
-                },
+                getTodayISO() { return this.getJakartaDateISO(); },
+                toggleAll(e) { if (e.target.checked) { this.selectedRows = this.filteredData.map(item => item.code); } else { this.selectedRows = []; } },
 
                 async deleteSelected() {
                     if(!confirm(`Hapus ${this.selectedRows.length} item terpilih?`)) return;
-                    this.isLoading = true;
-                    this.loadingText = "Menghapus item...";
-                    try {
-                        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete_list', codes: this.selectedRows }) });
-                        const r = await res.json();
-                        alert(r.message);
-                        this.selectedRows = [];
-                        this.refreshData();
-                    } catch(e) { alert("Gagal menghapus. Pastikan Server V4 sudah diupdate."); }
+                    this.isLoading = true; this.loadingText = "Menghapus item...";
+                    try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete_list', codes: this.selectedRows }) }); const r = await res.json(); alert(r.message); this.selectedRows = []; this.refreshData(); } catch(e) { alert("Gagal menghapus."); }
                     this.isLoading = false;
                 },
 
                 validateCourier(code, courier) {
-                    const c = courier.toUpperCase();
-                    const r = code.toUpperCase();
+                    const c = courier.toUpperCase(); const r = code.toUpperCase();
                     if (c.includes('JNT') && !r.startsWith('J') && !r.startsWith('JO') && !r.startsWith('JP')) return false;
                     if (c.includes('SPX') && !r.startsWith('SPX') && !r.startsWith('ID')) return false;
                     if (c.includes('JNE') && !r.startsWith('JNE') && isNaN(r.charAt(0))) return false; 
@@ -884,65 +878,35 @@
                 },
 
                 preProcessScan(codeFromCamera = null) {
-                    let code = codeFromCamera || this.barcodeInput.trim();
-                    code = code.toUpperCase().replace(/\s+/g, '');
-                    if(!code) return;
+                    let code = codeFromCamera || this.barcodeInput.trim(); code = code.toUpperCase().replace(/\s+/g, ''); if(!code) return;
                     if(this.onlineData.some(i => i.code === code) || this.batchQueue.some(i => i.code === code)) { this.triggerFeedback('error'); alert('Resi SUDAH ADA!'); if(!codeFromCamera) this.barcodeInput=''; return; }
-                    
-                    if (!this.validateCourier(code, this.selectedCourier)) {
-                        this.triggerFeedback('error');
-                        this.warningMessage = `Resi "${code}" sepertinya bukan milik ${this.selectedCourier}. Yakin ingin simpan?`;
-                        this.pendingScanCode = code;
-                        this.showWarningModal = true;
-                        return;
-                    }
-
+                    if (!this.validateCourier(code, this.selectedCourier)) { this.triggerFeedback('error'); this.warningMessage = `Resi "${code}" sepertinya bukan milik ${this.selectedCourier}. Yakin ingin simpan?`; this.pendingScanCode = code; this.showWarningModal = true; return; }
                     this.executeScan(code);
                 },
 
-                processConfirmedScan() {
-                    this.showWarningModal = false;
-                    this.executeScan(this.pendingScanCode);
-                },
+                processConfirmedScan() { this.showWarningModal = false; this.executeScan(this.pendingScanCode); },
 
                 executeScan(code) {
                     this.triggerFeedback('success');
-                    
                     let finalCourier = this.selectedCourier;
                     let currentIsCOD = (this.selectedMp === 'Manual') ? this.isCODInput : true;
                     let defaultPrice = (this.selectedMp === 'Manual' && !currentIsCOD) ? 0 : 0;
-                    
                     const dateStr = this.getJakartaDateISO();
-                    
                     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                     const d = new Date();
                     const dayName = days[d.getDay()];
                     const fullTime = d.toLocaleTimeString('id-ID', {hour12: false});
-                    
                     const method = 'Pick Up'; 
-
                     const newItem = { code: code, courier: finalCourier, marketplace: this.selectedMp, isCOD: currentIsCOD, receiver: '', destination: '', weight: '', price: defaultPrice, time: fullTime, date: dateStr, dayName: dayName, admin: this.selectedUser, method: method };
 
-                    if(this.isBatchMode) {
-                        this.batchQueue.push(newItem);
-                        if(!this.isCameraActive) this.barcodeInput = '';
-                        return;
-                    }
+                    if(this.isBatchMode) { this.batchQueue.push(newItem); if(!this.isCameraActive) this.barcodeInput = ''; return; }
+                    if (this.pcLinkEnabled && this.pcIpAddress) { fetch(`http://${this.pcIpAddress}:5000/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }), mode: 'no-cors' }).catch(err => console.log(err)); }
 
-                    if (this.pcLinkEnabled && this.pcIpAddress) {
-                        fetch(`http://${this.pcIpAddress}:5000/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }), mode: 'no-cors' }).catch(err => console.log(err));
-                    }
-
-                    this.isEditMode = false;
-                    this.tempItem = newItem;
+                    this.isEditMode = false; this.tempItem = newItem;
                     setTimeout(() => { this.showDetailModal = true; setTimeout(() => document.getElementById('receiverInput')?.focus(), 100); this.barcodeInput = ''; }, 300);
                 },
                 
-                triggerFeedback(type) { 
-                    this.scanStatus = type; 
-                    playBeep(type);
-                    setTimeout(() => this.scanStatus = 'idle', 800); 
-                },
+                triggerFeedback(type) { this.scanStatus = type; playBeep(type); setTimeout(() => this.scanStatus = 'idle', 800); },
                 
                 toggleCamera() { 
                     if(this.isCameraActive) { 
@@ -962,22 +926,14 @@
                 
                 exportExcel() {
                     const d = this.filteredData; if(d.length===0) return alert("Kosong");
-                    let c="Tanggal,Hari,Jam,Ekspedisi,Resi,Penerima,Tujuan,Status,Nominal,Admin,Profit\n";
-                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.destination}",${r.isCOD?'COD':'NON'},${r.price},${r.admin||''},${r.profit||0}\n`});
+                    let c="Tanggal,Hari,Jam,Ekspedisi,Resi,Penerima,Tujuan,Status,Nominal,Admin,Profit,Foto\n";
+                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.destination}",${r.isCOD?'COD':'NON'},${r.price},${r.admin||''},${r.profit||0},${r.photoUrl||''}\n`});
                     const l=document.createElement("a"); l.href="data:text/csv;charset=utf-8,"+encodeURI(c); l.download=`Laporan_${this.filterDate}.csv`; document.body.appendChild(l); l.click(); l.remove();
                 },
 
                 // MANIFEST LOGIC UPDATED
-                openManifestManager() {
-                    if (this.activeFilter !== 'ALL') this.manifestCourier = this.activeFilter;
-                    this.manifestTab = 'new';
-                    this.showManifestManager = true;
-                    this.selectedManifestItems = []; 
-                },
-                
-                isPrinted(code) {
-                    return this.processedResis.includes(code);
-                },
+                openManifestManager() { if (this.activeFilter !== 'ALL') this.manifestCourier = this.activeFilter; this.manifestTab = 'new'; this.showManifestManager = true; this.selectedManifestItems = []; },
+                isPrinted(code) { return this.processedResis.includes(code); },
                 
                 getPendingItems() {
                     return this.onlineData.filter(i => {
@@ -989,117 +945,33 @@
                         return true;
                     });
                 },
-                toggleManifestItem(code) {
-                    if (this.selectedManifestItems.includes(code)) {
-                        this.selectedManifestItems = this.selectedManifestItems.filter(c => c !== code);
-                    } else {
-                        this.selectedManifestItems.push(code);
-                    }
-                },
-                selectAllManifestItems() {
-                    const items = this.getPendingItems();
-                    if (this.selectedManifestItems.length === items.length) {
-                        this.selectedManifestItems = [];
-                    } else {
-                        this.selectedManifestItems = items.map(i => i.code);
-                    }
-                },
+                toggleManifestItem(code) { if (this.selectedManifestItems.includes(code)) { this.selectedManifestItems = this.selectedManifestItems.filter(c => c !== code); } else { this.selectedManifestItems.push(code); } },
+                selectAllManifestItems() { const items = this.getPendingItems(); if (this.selectedManifestItems.length === items.length) { this.selectedManifestItems = []; } else { this.selectedManifestItems = items.map(i => i.code); } },
+                
                 async createManifest() {
                     if (this.selectedManifestItems.length === 0) return;
-                    
                     const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
-                    
-                    const historyEntry = {
-                        id: Date.now(),
-                        courier: this.manifestCourier,
-                        timestamp: new Date().toISOString(),
-                        items: this.selectedManifestItems,
-                        itemCount: this.selectedManifestItems.length
-                    };
-                    
-                    this.isLoading = true;
-                    this.loadingText = "Menyimpan Manifest...";
-                    try {
-                         await fetch(this.apiUrl, { 
-                             method: 'POST', 
-                             body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) 
-                         });
-                         
-                         this.manifestHistory.push(historyEntry);
-                         this.processedResis = [...this.processedResis, ...this.selectedManifestItems];
-                         
-                         const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier;
-                         this.printManifestHTML(itemsToPrint, printTitle);
-                         
-                         this.selectedManifestItems = [];
-                         this.manifestTab = 'history'; 
-                         
-                    } catch(e) {
-                        alert("Gagal menyimpan ke database, tapi akan tetap diprint.");
-                        this.printManifestHTML(itemsToPrint, this.manifestCourier);
-                    }
+                    const historyEntry = { id: Date.now(), courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length };
+                    this.isLoading = true; this.loadingText = "Menyimpan Manifest...";
+                    try { await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); this.manifestHistory.push(historyEntry); this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; this.printManifestHTML(itemsToPrint, printTitle); this.selectedManifestItems = []; this.manifestTab = 'history'; } catch(e) { alert("Gagal menyimpan ke database."); }
                     this.isLoading = false;
                 },
-                reprintManifest(hist) {
-                    const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code));
-                    const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier;
-                    this.printManifestHTML(itemsToPrint, printTitle);
-                },
+                reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
                 async deleteManifest(hist) {
-                    if(!confirm('Hapus riwayat manifest ini? Data resi akan kembali menjadi "Belum Print".')) return;
-                    this.isLoading = true;
-                    this.loadingText = "Menghapus...";
-                    try {
-                        const res = await fetch(this.apiUrl, {
-                            method: 'POST',
-                            body: JSON.stringify({ action: 'delete_manifest', id: hist.id })
-                        });
-                        const r = await res.json();
-                        if(r.status === 'success') {
-                            this.manifestHistory = this.manifestHistory.filter(h => h.id !== hist.id);
-                            let newProcessed = [];
-                            this.manifestHistory.forEach(h => { newProcessed = [...newProcessed, ...h.items]; });
-                            this.processedResis = newProcessed;
-                            alert('Manifest berhasil dihapus.');
-                        } else {
-                            alert('Gagal menghapus manifest dari database.');
-                        }
-                    } catch(e) { console.error(e); alert('Error koneksi saat menghapus.'); }
+                    if(!confirm('Hapus riwayat manifest ini?')) return; this.isLoading = true;
+                    try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete_manifest', id: hist.id }) }); const r = await res.json(); if(r.status === 'success') { this.manifestHistory = this.manifestHistory.filter(h => h.id !== hist.id); let newProcessed = []; this.manifestHistory.forEach(h => { newProcessed = [...newProcessed, ...h.items]; }); this.processedResis = newProcessed; alert('Manifest dihapus.'); } } catch(e) { alert('Error koneksi.'); }
                     this.isLoading = false;
                 },
                 printManifestHTML(data, cn) {
-                    if(data.length===0) return alert("Data tidak ditemukan di database (mungkin sudah dihapus).");
-                    const tQ=data.length; 
-                    const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-                    const w=window.open('','_blank');
-                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; font-size: 12px; color: #333; width: 100%; box-sizing: border-box; } 
-                    .company-header { text-align: center; margin-bottom: 10px; } 
-                    .company-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; color: #000; } 
-                    .company-address { font-size: 12px; color: #000; margin-bottom: 1px; } 
-                    .report-title { text-align: center; margin: 10px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 5px 0; } 
-                    .report-title h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; } 
-                    .report-title h3 { margin: 2px 0 0; font-size: 16px; color: #000; font-weight: 800; } 
-                    .meta-info { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 12px; } 
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; } 
-                    th, td { border: 1px solid #000; padding: 4px; text-align: left; } 
-                    th { background-color: #f3f4f6; text-transform: uppercase; font-size: 11px; font-weight: 700; color: #000; } 
-                    td { font-size: 12px; } 
-                    .resi-col { font-size: 15px; font-weight: 900; font-family: monospace; } 
-                    .footer { display: flex; justify-content: space-between; margin-top: 30px; gap: 10px; } 
-                    .sign-box { text-align: center; width: 45%; } 
-                    .sign-line { margin-top: 50px; border-top: 1px solid #000; padding-top: 5px; font-size: 11px; font-weight: bold; width: 100%; } 
-                    .printed-by { text-align: center; font-size: 11px; margin-top: 20px; font-style: italic; color: #555; } 
-                    </style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10, Penjaringan, Jakarta Barat 14440</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 35%">No. Resi</th><th style="width: 30%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => `<tr><td style="text-align:center">${index + 1}</td><td class="resi-col">${item.code}<br><span style="font-size:9px; color:#555;">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${item.marketplace}</td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
+                    if(data.length===0) return alert("Data tidak ditemukan."); const tQ=data.length; const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); const w=window.open('','_blank');
+                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:15px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%}.sign-line{margin-top:50px;border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 35%">No. Resi</th><th style="width: 30%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => `<tr><td style="text-align:center">${index + 1}</td><td class="resi-col">${item.code}<br><span style="font-size:9px; color:#555;">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${item.marketplace}</td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
                     w.document.close();
                 },
 
                 printStruk(i) {
-                    const w = window.open('', '_blank', 'width=350,height=500');
-                    const date = this.formatDateID(i.date);
+                    const w = window.open('', '_blank', 'width=350,height=500'); const date = this.formatDateID(i.date);
                     const html = `<!DOCTYPE html><html><head><title>Struk-${i.code}</title><style>body{margin:0;padding:10px;font-family:'Courier New',monospace;font-size:12px;width:58mm;color:#000}.center{text-align:center}.bold{font-weight:bold}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between}.big{font-size:16px;font-weight:800}</style></head><body><div class="center bold">AUTOKIRIM TELUK GONG 2</div><div class="center">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="center">Pejagalan, Kec. Penjaringan, Jakarta Utara</div><div class="center">No Telp. 085760035568</div><div class="center bold" style="margin-bottom:5px">Pickup POS : AK00031858</div><div class="line"></div><div class="center bold">BUKTI TANDA TERIMA</div><div class="center">${date} ${i.time}</div><div class="line"></div><div class="center big">${i.courier}</div><div class="center bold" style="margin:5px 0">${i.code}</div><div class="line"></div><div class="row"><span>Tipe:</span><span class="bold">${i.isCOD ? 'COD' : 'NON-COD'}</span></div><div class="row"><span>Ongkir:</span><span class="bold">${this.formatRupiah(i.price)}</span></div><div class="line"></div><div class="bold">Penerima:</div><div>${i.receiver || '-'}</div><div class="bold" style="margin-top:4px">Tujuan:</div><div>${i.destination || '-'}</div><div class="line"></div><div class="center" style="font-size:10px;">Simpan struk ini sebagai bukti.</div><script>setTimeout(function(){ window.print(); }, 1000);</sc`+`ript></body></html>`;
-                    w.document.write(html);
-                    w.document.close();
+                    w.document.write(html); w.document.close();
                 },
                 
                 shareToWA() {
