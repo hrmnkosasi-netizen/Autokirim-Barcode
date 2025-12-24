@@ -908,11 +908,11 @@
 
                 executeScan(code) {
                     this.triggerFeedback('success');
+                    this.speakPaket(this.selectedCourier, code);
                     let finalCourier = this.selectedCourier;
                     
                     // FIX: Logic COD respects the UI toggle now
                     let currentIsCOD = this.isCODInput; 
-                    
                     let defaultPrice = (this.selectedMp === 'Manual' && !currentIsCOD) ? 0 : 0;
                     const dateStr = this.getJakartaDateISO();
                     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -930,6 +930,61 @@
                 },
                 
                 triggerFeedback(type) { this.scanStatus = type; playBeep(type); setTimeout(() => this.scanStatus = 'idle', 800); },
+
+                // --- FITUR SUARA ROBOT (UPDATE EJAAN) ---
+speakPaket(courier, code) {
+    if (!('speechSynthesis' in window)) return;
+
+    let sayCourier = courier; // Default (baca apa adanya)
+    const c = courier.toUpperCase();
+
+    // 1. Kustomisasi Ejaan Nama Kurir
+    if (c.includes('J&T CARGO')) {
+        sayCourier = "Je En Te Kargo";
+    } else if (c.includes('J&T')) {
+        sayCourier = "Je En Te";
+    } else if (c.includes('JNE')) {
+        sayCourier = "Je En E";
+    } else if (c.includes('ID EXPRESS')) {
+        sayCourier = "Ai Di Ekspres"; // Biar dibaca inggris "ID"
+    } else if (c.includes('SICEPAT')) {
+        sayCourier = "Si Cepat";
+    } else if (c.includes('SPX')) {
+        sayCourier = "Shopee"; // Atau bisa ganti "Es Pe Ex"
+    } else if (c.includes('LAZADA') || c.includes('LEX')) {
+        sayCourier = "Lazada";
+    } else if (c.includes('ANTERAJA')) {
+        sayCourier = "Anter Aja";
+    } else if (c.includes('NINJA')) {
+        sayCourier = "Ninja";
+    } else if (c.includes('LION')) {
+        sayCourier = "Laion Parsel"; // Biar dibaca "Lion" bukan "Lion" (hewan)
+    } else if (c.includes('SAPX') || c.includes('SAP')) {
+        sayCourier = "Es A Pe";
+    } else if (c.includes('SENTRAL')) {
+        sayCourier = "Sentral Kargo";
+    } else if (c.includes('PAXEL')) {
+        sayCourier = "Paksel";
+    } else if (c.includes('POS')) {
+        sayCourier = "Pos Aja";
+    }
+
+    // 2. Eja Resi (Pisahkan per karakter)
+    // Menggunakan regex untuk memisahkan huruf dan angka, lalu digabung spasi
+    // Contoh: JP123 -> J P 1 2 3
+    let sayCode = code.split('').join(' '); 
+
+    // 3. Eksekusi Suara
+    const msg = new SpeechSynthesisUtterance();
+    // Tambahkan jeda koma (,) agar ada napas sedikit antara nama kurir dan resi
+    msg.text = `${sayCourier}, ${sayCode}`; 
+    msg.lang = 'id-ID'; 
+    msg.rate = 0.9; // Sedikit diperlambat biar lebih jelas (0.9)
+    msg.pitch = 1.0; 
+
+    window.speechSynthesis.cancel(); 
+    window.speechSynthesis.speak(msg);
+},
                 
                 toggleCamera() { 
                     if(this.isCameraActive) { 
