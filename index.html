@@ -1073,9 +1073,51 @@ speakPaket(courier, code) {
                     const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
                     const historyEntry = { id: Date.now(), courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length };
                     this.isLoading = true; this.loadingText = "Menyimpan Manifest...";
-                    try { await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); this.manifestHistory.push(historyEntry); this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; this.printManifestHTML(itemsToPrint, printTitle); this.selectedManifestItems = []; this.manifestTab = 'history'; } catch(e) { alert("Gagal menyimpan ke database."); }
-                    this.isLoading = false;
-                },
+                    try { 
+        // Kirim data ke Server
+        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
+        
+        // Cek jika server mengirim respon bukan JSON (kadang error HTML)
+        const r = await res.json();
+        if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan");
+
+        // --- SKENARIO SUKSES NORMAL ---
+        this.manifestHistory.push(historyEntry); 
+        this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
+        
+        const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
+        this.printManifestHTML(itemsToPrint, printTitle); 
+        
+        this.selectedManifestItems = []; 
+        this.manifestTab = 'history'; 
+
+    } catch(e) { 
+        // --- SKENARIO PENYELAMATAN (ERROR TAPI SUKSES) ---
+        console.log("Terjadi error koneksi, mengecek ulang server...", e);
+        this.loadingText = "Verifikasi penyimpanan...";
+
+        // Coba tarik history terbaru dari server
+        await this.fetchManifestHistory();
+
+        // Cek apakah ID manifest kita TERSIMPAN di server?
+        const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
+
+        if (isActuallySaved) {
+            // JIKA TERNYATA ADA: Berarti sukses, cuma koneksi putus di jalan.
+            // Lanjut Print Manual
+            const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
+            this.printManifestHTML(itemsToPrint, printTitle);
+            
+            this.selectedManifestItems = []; 
+            this.manifestTab = 'history';
+        } else {
+            // JIKA BENAR-BENAR TIDAK ADA: Baru munculkan error
+            alert("Gagal menyimpan ke database. Silakan coba lagi. (Sinyal tidak stabil)"); 
+        }
+    }
+    
+    this.isLoading = false;
+},
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
                 async deleteManifest(hist) {
                     if(!confirm('Hapus riwayat manifest ini?')) return; this.isLoading = true;
