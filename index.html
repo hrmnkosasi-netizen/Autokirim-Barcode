@@ -1051,87 +1051,90 @@ speakPaket(courier, code) {
                 async createManifest() {
     if (this.selectedManifestItems.length === 0) return;
 
+    // === 1. CEK DOUBLE ===
     this.isLoading = true; 
     this.loadingText = "Memvalidasi data...";
     
-    try {
-        // 1. Cek Double Print (Mencegah duplikat history)
-        await this.fetchManifestHistory();
-        const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
+    await this.fetchManifestHistory();
+    const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
 
-        if (doubleResi.length > 0) {
-            alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
-            this.refreshData(); 
-            this.selectedManifestItems = []; 
-            return; // Berhenti di sini, loading dimatikan di 'finally'
-        }
+    if (doubleResi.length > 0) {
+        this.isLoading = false;
+        alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
+        this.refreshData(); 
+        this.selectedManifestItems = []; 
+        return; 
+    }
 
-        const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
-        
-        // --- PERBAIKAN PENTING: SIMPAN ID KE VARIABEL ---
-        const thisManifestId = Date.now(); 
-        
-        const historyEntry = { 
-            id: thisManifestId, // Gunakan variabel tadi
-            courier: this.manifestCourier, 
-            timestamp: new Date().toISOString(), 
-            items: this.selectedManifestItems, 
-            itemCount: this.selectedManifestItems.length 
-        };
-        
-        this.loadingText = "Menyimpan Manifest...";
-        
+    // === 2. PERSIAPAN DATA ===
+    const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
+    const thisManifestId = Date.now(); // ID Unik
+    
+    const historyEntry = { 
+        id: thisManifestId,
+        courier: this.manifestCourier, 
+        timestamp: new Date().toISOString(), 
+        items: this.selectedManifestItems, 
+        itemCount: this.selectedManifestItems.length 
+    };
+    
+    let isSuccess = false; // Penanda Sukses/Gagal
+
+    // === 3. PROSES SIMPAN ===
+    this.loadingText = "Menyimpan Manifest...";
+    try { 
         // Kirim ke Server
         const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
         const r = await res.json();
         
-        // Jika server bilang gagal, lempar ke 'catch'
         if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan");
 
-        // === SKENARIO SUKSES ===
-        this.manifestHistory.push(historyEntry); 
-        this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
-        
-        const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
-        this.printManifestHTML(itemsToPrint, printTitle); 
-        
-        this.selectedManifestItems = []; 
-        this.manifestTab = 'history'; 
+        // Sukses Normal
+        isSuccess = true;
 
     } catch(e) { 
-        // === SKENARIO ERROR KONEKSI (PENYELAMATAN) ===
-        console.log("Terjadi error koneksi, mencoba verifikasi...", e);
+        // Error Koneksi -> Cek Verifikasi
+        console.log("Koneksi putus, verifikasi ulang...", e);
         this.loadingText = "Verifikasi penyimpanan...";
 
         try {
-            // Cek ulang ke server: Apakah ID tadi sebenarnya masuk?
             await this.fetchManifestHistory();
-            
-            // Perbaikan: variabel 'thisManifestId' sekarang sudah dikenali di sini (karena pakai var di atas)
-            // Namun kita harus pastikan variabelnya ada. Jika error terjadi SEBELUM var dibuat, kita skip.
-            const createdId = (typeof thisManifestId !== 'undefined') ? thisManifestId : 0;
-            const isActuallySaved = this.manifestHistory.some(h => h.id === createdId);
+            // Cek apakah ID kita sebenernya masuk?
+            const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
 
-            if (isActuallySaved && createdId !== 0) {
-                // TERNATA SUKSES (Cuma sinyal putus saat terima balasan) -> Lanjut Print
-                const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
-                const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
-                this.printManifestHTML(itemsToPrint, printTitle);
-                
-                this.selectedManifestItems = []; 
-                this.manifestTab = 'history';
+            if (isActuallySaved) {
+                isSuccess = true; // Ternyata sukses, lanjut!
             } else {
-                // BENAR-BENAR GAGAL
-                alert("Gagal menyimpan ke database. Koneksi tidak stabil, silakan coba lagi."); 
+                alert("Gagal menyimpan. Sinyal tidak stabil, silakan coba lagi."); 
             }
         } catch (errVerif) {
-            // Jika verifikasi pun gagal (internet mati total)
-            alert("Koneksi terputus total. Data tidak dapat disimpan.");
+            alert("Koneksi terputus total. Cek internet Anda.");
         }
-    } finally {
-        // === PASTI JALAN ===
-        // Apapun yang terjadi (Sukses/Error/Crash), loading PASTI mati.
-        this.isLoading = false;
+    }
+
+    // === 4. UPDATE DATA & MATIKAN LOADING ===
+    if (isSuccess) {
+        // Masukkan ke history lokal jika belum ada
+        if (!this.manifestHistory.some(h => h.id === thisManifestId)) {
+            this.manifestHistory.push(historyEntry);
+        }
+        // Update status 'Printed' (Warna Hijau)
+        this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
+        
+        this.selectedManifestItems = []; 
+        this.manifestTab = 'history'; 
+    }
+
+    // **KUNCI PERBAIKAN:** Matikan loading SEBELUM print
+    this.isLoading = false;
+
+    // === 5. PROSES PRINT (SETELAH LOADING MATI) ===
+    if (isSuccess) {
+        // Beri jeda 300ms agar loading benar-benar hilang dari layar HP
+        setTimeout(() => {
+            const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
+            this.printManifestHTML(itemsToPrint, printTitle); 
+        }, 300);
     }
 },
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
@@ -1142,9 +1145,18 @@ speakPaket(courier, code) {
                 },
                 printManifestHTML(data, cn) {
     if (data.length === 0) return alert("Data tidak ditemukan.");
+    
     const tQ = data.length;
     const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+    
+    // Coba buka tab baru
     const w = window.open('', '_blank');
+
+    // CEK POPUP BLOCKER HP
+    if (w === null || typeof w === 'undefined') {
+        alert("Pop-up Print diblokir oleh Browser!\n\nSolusi:\n1. Cek notifikasi 'Pop-up blocked' di address bar.\n2. Izinkan pop-up untuk situs ini.\n3. Coba print ulang dari tab Riwayat.");
+        return;
+    }
 
     w.document.write(`<html><head><title>Manifest ${cn}</title><style>
         body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}
@@ -1192,7 +1204,6 @@ speakPaket(courier, code) {
         </thead>
         <tbody>
             ${data.map((item, index) => {
-                // LOGIC PEMBERSIH: Hapus teks (Pick Up) atau (Drop Off) dari nama market agar tidak double
                 let cleanMarket = item.marketplace || '';
                 cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
                 
@@ -1224,7 +1235,8 @@ speakPaket(courier, code) {
         <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div>
     </div>
     <div class="printed-by">Printed by : ${this.selectedUser}</div>
-    <script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`)
+    <script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
+    
     w.document.close();
 },
 
