@@ -1049,9 +1049,9 @@ speakPaket(courier, code) {
                 selectAllManifestItems() { const items = this.getPendingItems(); if (this.selectedManifestItems.length === items.length) { this.selectedManifestItems = []; } else { this.selectedManifestItems = items.map(i => i.code); } },
                 
                 async createManifest() {
-                    if (this.selectedManifestItems.length === 0) return;
+    if (this.selectedManifestItems.length === 0) return;
 
-// === TAMBAHAN BARU: CEK DOUBLE ===
+    // === TAMBAHAN BARU: CEK DOUBLE ===
     this.isLoading = true; 
     this.loadingText = "Memvalidasi data...";
     
@@ -1059,21 +1059,34 @@ speakPaket(courier, code) {
     await this.fetchManifestHistory();
 
     // 2. Cek apakah resi yang dipilih SUDAH ada di history (sudah diprint di HP)
-    // this.processedResis sudah diupdate oleh fetchManifestHistory() di atas
     const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
 
     if (doubleResi.length > 0) {
         this.isLoading = false;
-        alert(`PERINGATAN: ${doubleResi.length} resi sudah diprint sebelumnya (mungkin di HP)!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
-        this.refreshData(); // Refresh agar status 'PRINTED' muncul di tabel
-        this.selectedManifestItems = []; // Kosongkan pilihan
-        return; // BATALKAN PROSES
+        alert(`PERINGATAN: ${doubleResi.length} resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
+        this.refreshData(); 
+        this.selectedManifestItems = []; 
+        return; 
     }
     // ==================================
-                    const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
-                    const historyEntry = { id: Date.now(), courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length };
-                    this.isLoading = true; this.loadingText = "Menyimpan Manifest...";
-                    try { 
+
+    const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
+    
+    // --- PERBAIKAN BUG DISINI ---
+    // Kita simpan ID ke dalam variabel dulu supaya bisa dipanggil di block 'catch'
+    const thisManifestId = Date.now(); 
+    
+    const historyEntry = { 
+        id: thisManifestId, // Pakai variabel yang sudah dibuat
+        courier: this.manifestCourier, 
+        timestamp: new Date().toISOString(), 
+        items: this.selectedManifestItems, 
+        itemCount: this.selectedManifestItems.length 
+    };
+    
+    this.loadingText = "Menyimpan Manifest...";
+    
+    try { 
         // Kirim data ke Server
         const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
         
@@ -1100,6 +1113,7 @@ speakPaket(courier, code) {
         await this.fetchManifestHistory();
 
         // Cek apakah ID manifest kita TERSIMPAN di server?
+        // SEKARANG VARIABLE 'thisManifestId' SUDAH DIKENALI
         const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
 
         if (isActuallySaved) {
@@ -1116,6 +1130,7 @@ speakPaket(courier, code) {
         }
     }
     
+    // Pastikan loading mati apapun yang terjadi
     this.isLoading = false;
 },
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
