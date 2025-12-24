@@ -662,7 +662,7 @@
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === 'visible' && this.isLoggedIn) {
             console.log("Tab aktif, refresh data...");
-            this.refreshData();
+            this.refreshData(true);
             this.fetchManifestHistory();
         }
     });
@@ -671,7 +671,7 @@
     setInterval(() => {
         if (this.isLoggedIn && !this.showDetailModal && !this.isEditMode) {
             // Hanya refresh jika tidak sedang edit/buka modal
-            this.refreshData();
+            this.refreshData(true);
             this.fetchManifestHistory();
         }
     }, 60000);
@@ -738,8 +738,10 @@
                     return dateStr.substring(0, 10);
                 },
 
-                async refreshData() {
-                    if (!this.apiUrl) return; this.isLoading = true;
+                async refreshData(isSilent = false) {
+                    if (!this.apiUrl) return;
+                    // HANYA tampilkan loading jika BUKAN mode silent
+                    if (!isSilent) this.isLoading = true;
                     try {
                         const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'get' }) });
                         if(res.ok) {
@@ -756,7 +758,8 @@
                             }).reverse(); 
                             if(this.currentView === 'dashboard') this.updateCharts();
                         }
-                    } catch (e) { console.error(e); } this.isLoading = false;
+                    } catch (e) { console.error(e); }
+                    if (!isSilent) this.isLoading = false;
                 },
                 
                 async fetchManifestHistory() {
