@@ -572,6 +572,22 @@
         </div>
     </div>
 
+    <div x-show="showPrintModal" class="fixed inset-0 bg-slate-900/90 z-[120] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center modal-enter relative">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600 text-4xl animate-bounce">
+                <i class="fas fa-check"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-slate-800 mb-1">Berhasil Disimpan!</h3>
+            <p class="text-xs text-slate-500 mb-6 font-bold">Data aman. Silakan print manifest.</p>
+            
+            <button @click="execFinalPrint()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-xl font-bold shadow-lg shadow-slate-500/30 flex items-center justify-center gap-2 text-sm transition-all transform hover:-translate-y-1">
+                <i class="fas fa-print text-yellow-400 text-lg"></i> BUKA FILE MANIFEST
+            </button>
+            
+            <button @click="showPrintModal = false" class="mt-4 text-xs font-bold text-slate-400 hover:text-slate-600">TUTUP / PRINT NANTI</button>
+        </div>
+    </div>
+
     <div x-show="showQrModal" class="fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity>
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center modal-enter relative">
             <button @click="showQrModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-rose-500"><i class="fas fa-times text-xl"></i></button>
@@ -630,6 +646,12 @@
                 showQrModal: false, isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null, selectedRows: [],
                 pcLinkEnabled: localStorage.getItem('pcLinkEnabled') === 'true', pcIpAddress: localStorage.getItem('pcIpAddress') || '',
 
+                // === TAMBAHAN BARU UNTUK MODAL PRINT ===
+                showPrintModal: false,
+                pendingPrintData: [],
+                pendingPrintTitle: '',
+                // =======================================
+
                 couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo','Lion Parcel (Reg Pack)','Lion Parcel (Jago Pack)', 'SAPX', 'Sentral Cargo', 'Paxel', 'POS Aja'],
                 marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
                 selectedCourier: 'J&T Express', selectedMp: 'Shopee', barcodeInput: '', 
@@ -658,23 +680,23 @@
                     this.$watch('pcIpAddress', val => localStorage.setItem('pcIpAddress', val));
 
                     // === TAMBAHAN BARU: AUTO SYNC ===
-    // 1. Refresh otomatis saat tab dibuka/diklik kembali
-    document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === 'visible' && this.isLoggedIn) {
-            console.log("Tab aktif, refresh data...");
-            this.refreshData(true);
-            this.fetchManifestHistory();
-        }
-    });
+                    // 1. Refresh otomatis saat tab dibuka/diklik kembali
+                    document.addEventListener("visibilitychange", () => {
+                        if (document.visibilityState === 'visible' && this.isLoggedIn) {
+                            console.log("Tab aktif, refresh data...");
+                            this.refreshData(true);
+                            this.fetchManifestHistory();
+                        }
+                    });
 
-    // 2. Refresh otomatis setiap 60 detik (1 menit) untuk menjaga data tetap update
-    setInterval(() => {
-        if (this.isLoggedIn && !this.showDetailModal && !this.isEditMode) {
-            // Hanya refresh jika tidak sedang edit/buka modal
-            this.refreshData(true);
-            this.fetchManifestHistory();
-        }
-    }, 60000);
+                    // 2. Refresh otomatis setiap 60 detik (1 menit) untuk menjaga data tetap update
+                    setInterval(() => {
+                        if (this.isLoggedIn && !this.showDetailModal && !this.isEditMode) {
+                            // Hanya refresh jika tidak sedang edit/buka modal
+                            this.refreshData(true);
+                            this.fetchManifestHistory();
+                        }
+                    }, 60000); 
                 },
                 
                 getJakartaDateISO() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); },
@@ -704,31 +726,31 @@
                     this.isLoading = false;
                 },
                 logout() { 
-    if(confirm('Keluar?')) { 
-        // 1. Ubah status login
-        this.isLoggedIn = false; 
-        
-        // 2. Hapus sesi penyimpanan
-        sessionStorage.removeItem('autokirim_session'); 
-        sessionStorage.removeItem('autokirim_user'); 
-        
-        // 3. RESET FORMULIR (SOLUSI BUG)
-        this.selectedUser = '';  // Reset dropdown ke "-- Siapa kamu? --"
-        this.loginPass = '';     // Kosongkan kolom password
-        
-        // 4. Matikan kamera jika masih nyala (Pencegahan error)
-        if(this.isCameraActive) {
-            try {
-                if(this.html5QrCode) this.html5QrCode.stop().then(() => { 
-                    this.html5QrCode.clear(); 
-                    this.isCameraActive = false; 
-                });
-            } catch(e) { 
-                this.isCameraActive = false; 
-            }
-        }
-    } 
-},
+                    if(confirm('Keluar?')) { 
+                        // 1. Ubah status login
+                        this.isLoggedIn = false; 
+                        
+                        // 2. Hapus sesi penyimpanan
+                        sessionStorage.removeItem('autokirim_session'); 
+                        sessionStorage.removeItem('autokirim_user'); 
+                        
+                        // 3. RESET FORMULIR (SOLUSI BUG)
+                        this.selectedUser = '';  // Reset dropdown ke "-- Siapa kamu? --"
+                        this.loginPass = '';     // Kosongkan kolom password
+                        
+                        // 4. Matikan kamera jika masih nyala (Pencegahan error)
+                        if(this.isCameraActive) {
+                            try {
+                                if(this.html5QrCode) this.html5QrCode.stop().then(() => { 
+                                    this.html5QrCode.clear(); 
+                                    this.isCameraActive = false; 
+                                });
+                            } catch(e) { 
+                                this.isCameraActive = false; 
+                            }
+                        }
+                    } 
+                },
                 fixDateFromDB(dateStr) {
                     if(!dateStr) return '';
                     if(dateStr.includes('T')) {
@@ -954,59 +976,59 @@
                 triggerFeedback(type) { this.scanStatus = type; playBeep(type); setTimeout(() => this.scanStatus = 'idle', 800); },
 
                 // --- FITUR SUARA ROBOT (UPDATE EJAAN) ---
-speakPaket(courier, code) {
-    if (!('speechSynthesis' in window)) return;
+                speakPaket(courier, code) {
+                    if (!('speechSynthesis' in window)) return;
 
-    let sayCourier = courier; // Default (baca apa adanya)
-    const c = courier.toUpperCase();
+                    let sayCourier = courier; // Default (baca apa adanya)
+                    const c = courier.toUpperCase();
 
-    // 1. Kustomisasi Ejaan Nama Kurir
-    if (c.includes('J&T CARGO')) {
-        sayCourier = "Je En Te Kargo";
-    } else if (c.includes('J&T')) {
-        sayCourier = "Je En Te";
-    } else if (c.includes('JNE')) {
-        sayCourier = "Je En E";
-    } else if (c.includes('ID EXPRESS')) {
-        sayCourier = "Ai Di Ekspres"; // Biar dibaca inggris "ID"
-    } else if (c.includes('SICEPAT')) {
-        sayCourier = "Si Cepat";
-    } else if (c.includes('SPX')) {
-        sayCourier = "Shopee"; // Atau bisa ganti "Es Pe Ex"
-    } else if (c.includes('LAZADA') || c.includes('LEX')) {
-        sayCourier = "Lazada";
-    } else if (c.includes('ANTERAJA')) {
-        sayCourier = "Anter Aja";
-    } else if (c.includes('NINJA')) {
-        sayCourier = "Ninja";
-    } else if (c.includes('LION')) {
-        sayCourier = "Laion Parsel"; // Biar dibaca "Lion" bukan "Lion" (hewan)
-    } else if (c.includes('SAPX') || c.includes('SAP')) {
-        sayCourier = "Es A Pe";
-    } else if (c.includes('SENTRAL')) {
-        sayCourier = "Sentral Kargo";
-    } else if (c.includes('PAXEL')) {
-        sayCourier = "Paksel";
-    } else if (c.includes('POS')) {
-        sayCourier = "Pos Aja";
-    }
+                    // 1. Kustomisasi Ejaan Nama Kurir
+                    if (c.includes('J&T CARGO')) {
+                        sayCourier = "Je En Te Kargo";
+                    } else if (c.includes('J&T')) {
+                        sayCourier = "Je En Te";
+                    } else if (c.includes('JNE')) {
+                        sayCourier = "Je En E";
+                    } else if (c.includes('ID EXPRESS')) {
+                        sayCourier = "Ai Di Ekspres"; // Biar dibaca inggris "ID"
+                    } else if (c.includes('SICEPAT')) {
+                        sayCourier = "Si Cepat";
+                    } else if (c.includes('SPX')) {
+                        sayCourier = "Shopee"; // Atau bisa ganti "Es Pe Ex"
+                    } else if (c.includes('LAZADA') || c.includes('LEX')) {
+                        sayCourier = "Lazada";
+                    } else if (c.includes('ANTERAJA')) {
+                        sayCourier = "Anter Aja";
+                    } else if (c.includes('NINJA')) {
+                        sayCourier = "Ninja";
+                    } else if (c.includes('LION')) {
+                        sayCourier = "Laion Parsel"; // Biar dibaca "Lion" bukan "Lion" (hewan)
+                    } else if (c.includes('SAPX') || c.includes('SAP')) {
+                        sayCourier = "Es A Pe";
+                    } else if (c.includes('SENTRAL')) {
+                        sayCourier = "Sentral Kargo";
+                    } else if (c.includes('PAXEL')) {
+                        sayCourier = "Paksel";
+                    } else if (c.includes('POS')) {
+                        sayCourier = "Pos Aja";
+                    }
 
-    // 2. Eja Resi (Pisahkan per karakter)
-    // Menggunakan regex untuk memisahkan huruf dan angka, lalu digabung spasi
-    // Contoh: JP123 -> J P 1 2 3
-    let sayCode = code.split('').join(' '); 
+                    // 2. Eja Resi (Pisahkan per karakter)
+                    // Menggunakan regex untuk memisahkan huruf dan angka, lalu digabung spasi
+                    // Contoh: JP123 -> J P 1 2 3
+                    let sayCode = code.split('').join(' '); 
 
-    // 3. Eksekusi Suara
-    const msg = new SpeechSynthesisUtterance();
-    // Tambahkan jeda koma (,) agar ada napas sedikit antara nama kurir dan resi
-    msg.text = `${sayCourier}, ${sayCode}`; 
-    msg.lang = 'id-ID'; 
-    msg.rate = 0.9; // Sedikit diperlambat biar lebih jelas (0.9)
-    msg.pitch = 1.0; 
+                    // 3. Eksekusi Suara
+                    const msg = new SpeechSynthesisUtterance();
+                    // Tambahkan jeda koma (,) agar ada napas sedikit antara nama kurir dan resi
+                    msg.text = `${sayCourier}, ${sayCode}`; 
+                    msg.lang = 'id-ID'; 
+                    msg.rate = 0.9; // Sedikit diperlambat biar lebih jelas (0.9)
+                    msg.pitch = 1.0; 
 
-    window.speechSynthesis.cancel(); 
-    window.speechSynthesis.speak(msg);
-},
+                    window.speechSynthesis.cancel(); 
+                    window.speechSynthesis.speak(msg);
+                },
                 
                 toggleCamera() { 
                     if(this.isCameraActive) { 
@@ -1049,94 +1071,80 @@ speakPaket(courier, code) {
                 selectAllManifestItems() { const items = this.getPendingItems(); if (this.selectedManifestItems.length === items.length) { this.selectedManifestItems = []; } else { this.selectedManifestItems = items.map(i => i.code); } },
                 
                 async createManifest() {
-    if (this.selectedManifestItems.length === 0) return;
+                    if (this.selectedManifestItems.length === 0) return;
 
-    // === 1. CEK DOUBLE ===
-    this.isLoading = true; 
-    this.loadingText = "Memvalidasi data...";
-    
-    await this.fetchManifestHistory();
-    const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
+                    // 1. Cek Double
+                    this.isLoading = true; 
+                    this.loadingText = "Memvalidasi data...";
+                    
+                    await this.fetchManifestHistory();
+                    const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
 
-    if (doubleResi.length > 0) {
-        this.isLoading = false;
-        alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
-        this.refreshData(); 
-        this.selectedManifestItems = []; 
-        return; 
-    }
+                    if (doubleResi.length > 0) {
+                        this.isLoading = false;
+                        alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
+                        this.refreshData(); 
+                        this.selectedManifestItems = []; 
+                        return; 
+                    }
 
-    // === 2. PERSIAPAN DATA ===
-    const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
-    const thisManifestId = Date.now(); // ID Unik
-    
-    const historyEntry = { 
-        id: thisManifestId,
-        courier: this.manifestCourier, 
-        timestamp: new Date().toISOString(), 
-        items: this.selectedManifestItems, 
-        itemCount: this.selectedManifestItems.length 
-    };
-    
-    let isSuccess = false; // Penanda Sukses/Gagal
+                    // 2. Siapkan Data
+                    const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
+                    const thisManifestId = Date.now();
+                    const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier;
+                    
+                    const historyEntry = { 
+                        id: thisManifestId,
+                        courier: this.manifestCourier, 
+                        timestamp: new Date().toISOString(), 
+                        items: this.selectedManifestItems, 
+                        itemCount: this.selectedManifestItems.length 
+                    };
+                    
+                    let isSuccess = false;
 
-    // === 3. PROSES SIMPAN ===
-    this.loadingText = "Menyimpan Manifest...";
-    try { 
-        // Kirim ke Server
-        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
-        const r = await res.json();
-        
-        if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan");
+                    // 3. Kirim ke Server
+                    this.loadingText = "Menyimpan Manifest...";
+                    try { 
+                        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
+                        const r = await res.json();
+                        if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan");
+                        isSuccess = true;
+                    } catch(e) { 
+                        // Cek Verifikasi jika error koneksi
+                        console.log("Koneksi putus, verifikasi ulang...", e);
+                        this.loadingText = "Verifikasi penyimpanan...";
+                        try {
+                            await this.fetchManifestHistory();
+                            const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
+                            if (isActuallySaved) { isSuccess = true; } 
+                            else { alert("Gagal menyimpan. Sinyal tidak stabil."); }
+                        } catch (errVerif) { alert("Koneksi terputus total."); }
+                    }
 
-        // Sukses Normal
-        isSuccess = true;
+                    // 4. Update State & Matikan Loading
+                    if (isSuccess) {
+                        if (!this.manifestHistory.some(h => h.id === thisManifestId)) { this.manifestHistory.push(historyEntry); }
+                        this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
+                        this.selectedManifestItems = []; 
+                        this.manifestTab = 'history';
+                        
+                        // === PERUBAHAN UTAMA: SIMPAN DATA KE MODAL, JANGAN PRINT LANGSUNG ===
+                        this.pendingPrintData = itemsToPrint;
+                        this.pendingPrintTitle = printTitle;
+                        this.showPrintModal = true; // Munculkan Modal Sukses
+                        // ====================================================================
+                    }
 
-    } catch(e) { 
-        // Error Koneksi -> Cek Verifikasi
-        console.log("Koneksi putus, verifikasi ulang...", e);
-        this.loadingText = "Verifikasi penyimpanan...";
+                    this.isLoading = false;
+                },
 
-        try {
-            await this.fetchManifestHistory();
-            // Cek apakah ID kita sebenernya masuk?
-            const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
+                // FUNGSI UNTUK PRINT DARI TOMBOL (ANTI BLOKIR BROWSER HP)
+                execFinalPrint() {
+                    this.showPrintModal = false; // Tutup modal
+                    this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle);
+                },
 
-            if (isActuallySaved) {
-                isSuccess = true; // Ternyata sukses, lanjut!
-            } else {
-                alert("Gagal menyimpan. Sinyal tidak stabil, silakan coba lagi."); 
-            }
-        } catch (errVerif) {
-            alert("Koneksi terputus total. Cek internet Anda.");
-        }
-    }
-
-    // === 4. UPDATE DATA & MATIKAN LOADING ===
-    if (isSuccess) {
-        // Masukkan ke history lokal jika belum ada
-        if (!this.manifestHistory.some(h => h.id === thisManifestId)) {
-            this.manifestHistory.push(historyEntry);
-        }
-        // Update status 'Printed' (Warna Hijau)
-        this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
-        
-        this.selectedManifestItems = []; 
-        this.manifestTab = 'history'; 
-    }
-
-    // **KUNCI PERBAIKAN:** Matikan loading SEBELUM print
-    this.isLoading = false;
-
-    // === 5. PROSES PRINT (SETELAH LOADING MATI) ===
-    if (isSuccess) {
-        // Beri jeda 300ms agar loading benar-benar hilang dari layar HP
-        setTimeout(() => {
-            const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
-            this.printManifestHTML(itemsToPrint, printTitle); 
-        }, 300);
-    }
-},
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
                 async deleteManifest(hist) {
                     if(!confirm('Hapus riwayat manifest ini?')) return; this.isLoading = true;
@@ -1144,101 +1152,92 @@ speakPaket(courier, code) {
                     this.isLoading = false;
                 },
                 printManifestHTML(data, cn) {
-    if (data.length === 0) return alert("Data tidak ditemukan.");
-    
-    const tQ = data.length;
-    const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-    
-    // Coba buka tab baru
-    const w = window.open('', '_blank');
+                    if (data.length === 0) return alert("Data tidak ditemukan.");
+                    const tQ = data.length;
+                    const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+                    const w = window.open('', '_blank');
 
-    // CEK POPUP BLOCKER HP
-    if (w === null || typeof w === 'undefined') {
-        alert("Pop-up Print diblokir oleh Browser!\n\nSolusi:\n1. Cek notifikasi 'Pop-up blocked' di address bar.\n2. Izinkan pop-up untuk situs ini.\n3. Coba print ulang dari tab Riwayat.");
-        return;
-    }
-
-    w.document.write(`<html><head><title>Manifest ${cn}</title><style>
-        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}
-        .company-header{text-align:center;margin-bottom:10px}
-        .company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}
-        .company-address{font-size:12px;color:#000;margin-bottom:1px}
-        .report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}
-        .report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}
-        .report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}
-        .meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}
-        table{width:100%;border-collapse:collapse;margin-bottom:20px}
-        th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}
-        th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}
-        td{font-size:12px}
-        .resi-col{font-size:14px;font-weight:900;font-family:monospace}
-        .footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}
-        .sign-box{text-align:center;width:45%}
-        .sign-line{margin-top:50px;border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%}
-        .printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}
-    </style></head><body>
-    <div class="company-header">
-        <div class="company-name">AUTOKIRIM TELUK GONG 2</div>
-        <div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div>
-        <div class="company-address">No Telp. 085760035568</div>
-        <div class="pos-id">Pickup POS : AK00031858</div>
-    </div>
-    <div class="report-title">
-        <h2>PICKUP MANIFEST</h2>
-        <h3>${cn.toUpperCase()}</h3>
-    </div>
-    <div class="meta-info">
-        <div>${timeP}</div>
-        <div>Total: ${tQ}</div>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 5%; text-align:center;">No</th>
-                <th style="width: 12%">Waktu Scan</th>
-                <th style="width: 25%">No. Resi</th>
-                <th style="width: 28%">Nama Penerima</th>
-                <th style="width: 15%">Market</th>
-                <th style="width: 15%">Tipe</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${data.map((item, index) => {
-                let cleanMarket = item.marketplace || '';
-                cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
-                
-                return `
-                <tr>
-                    <td style="text-align:center">${index + 1}</td>
-                    <td style="font-size:11px;">
-                        ${this.formatDateID(item.date)}<br>
-                        <span style="font-weight:bold; color:#555">${item.time}</span>
-                    </td>
-                    <td class="resi-col">
-                        ${item.code}<br>
-                        <span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span>
-                    </td>
-                    <td>${item.receiver || '-'}</td>
-                    <td>
-                        ${cleanMarket}<br>
-                        <span style="font-size:10px; font-weight:bold; color:#444">
-                            (${item.method || 'Pick Up'})
-                        </span>
-                    </td>
-                    <td>${item.isCOD ? 'COD' : '(NON COD)'}</td>
-                </tr>`;
-            }).join('')}
-        </tbody>
-    </table>
-    <div class="footer">
-        <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div>
-        <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div>
-    </div>
-    <div class="printed-by">Printed by : ${this.selectedUser}</div>
-    <script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
-    
-    w.document.close();
-},
+                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>
+                        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}
+                        .company-header{text-align:center;margin-bottom:10px}
+                        .company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}
+                        .company-address{font-size:12px;color:#000;margin-bottom:1px}
+                        .report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}
+                        .report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}
+                        .report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}
+                        .meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}
+                        table{width:100%;border-collapse:collapse;margin-bottom:20px}
+                        th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}
+                        th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}
+                        td{font-size:12px}
+                        .resi-col{font-size:14px;font-weight:900;font-family:monospace}
+                        .footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}
+                        .sign-box{text-align:center;width:45%}
+                        .sign-line{margin-top:50px;border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%}
+                        .printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}
+                    </style></head><body>
+                    <div class="company-header">
+                        <div class="company-name">AUTOKIRIM TELUK GONG 2</div>
+                        <div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div>
+                        <div class="company-address">No Telp. 085760035568</div>
+                        <div class="pos-id">Pickup POS : AK00031858</div>
+                    </div>
+                    <div class="report-title">
+                        <h2>PICKUP MANIFEST</h2>
+                        <h3>${cn.toUpperCase()}</h3>
+                    </div>
+                    <div class="meta-info">
+                        <div>${timeP}</div>
+                        <div>Total: ${tQ}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 5%; text-align:center;">No</th>
+                                <th style="width: 12%">Waktu Scan</th>
+                                <th style="width: 25%">No. Resi</th>
+                                <th style="width: 28%">Nama Penerima</th>
+                                <th style="width: 15%">Market</th>
+                                <th style="width: 15%">Tipe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.map((item, index) => {
+                                let cleanMarket = item.marketplace || '';
+                                cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
+                                
+                                return `
+                                <tr>
+                                    <td style="text-align:center">${index + 1}</td>
+                                    <td style="font-size:11px;">
+                                        ${this.formatDateID(item.date)}<br>
+                                        <span style="font-weight:bold; color:#555">${item.time}</span>
+                                    </td>
+                                    <td class="resi-col">
+                                        ${item.code}<br>
+                                        <span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span>
+                                    </td>
+                                    <td>${item.receiver || '-'}</td>
+                                    <td>
+                                        ${cleanMarket}<br>
+                                        <span style="font-size:10px; font-weight:bold; color:#444">
+                                            (${item.method || 'Pick Up'})
+                                        </span>
+                                    </td>
+                                    <td>${item.isCOD ? 'COD' : '(NON COD)'}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div>
+                        <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div>
+                    </div>
+                    <div class="printed-by">Printed by : ${this.selectedUser}</div>
+                    <script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
+                    
+                    w.document.close();
+                },
 
                 printStruk(i) {
                     const w = window.open('', '_blank', 'width=350,height=500'); const date = this.formatDateID(i.date);
