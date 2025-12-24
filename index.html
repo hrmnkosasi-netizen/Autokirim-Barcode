@@ -684,8 +684,32 @@
                     }
                     this.isLoading = false;
                 },
-                logout() { if(confirm('Keluar?')) { this.isLoggedIn = false; sessionStorage.removeItem('autokirim_session'); sessionStorage.removeItem('autokirim_user'); } },
-
+                logout() { 
+    if(confirm('Keluar?')) { 
+        // 1. Ubah status login
+        this.isLoggedIn = false; 
+        
+        // 2. Hapus sesi penyimpanan
+        sessionStorage.removeItem('autokirim_session'); 
+        sessionStorage.removeItem('autokirim_user'); 
+        
+        // 3. RESET FORMULIR (SOLUSI BUG)
+        this.selectedUser = '';  // Reset dropdown ke "-- Siapa kamu? --"
+        this.loginPass = '';     // Kosongkan kolom password
+        
+        // 4. Matikan kamera jika masih nyala (Pencegahan error)
+        if(this.isCameraActive) {
+            try {
+                if(this.html5QrCode) this.html5QrCode.stop().then(() => { 
+                    this.html5QrCode.clear(); 
+                    this.isCameraActive = false; 
+                });
+            } catch(e) { 
+                this.isCameraActive = false; 
+            }
+        }
+    } 
+},
                 fixDateFromDB(dateStr) {
                     if(!dateStr) return '';
                     if(dateStr.includes('T')) {
