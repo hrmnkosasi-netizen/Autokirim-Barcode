@@ -1051,50 +1051,44 @@ speakPaket(courier, code) {
                 async createManifest() {
     if (this.selectedManifestItems.length === 0) return;
 
-    // === TAMBAHAN BARU: CEK DOUBLE ===
     this.isLoading = true; 
     this.loadingText = "Memvalidasi data...";
     
-    // 1. Tarik data history terbaru dari server dulu (untuk memastikan)
-    await this.fetchManifestHistory();
+    try {
+        // 1. Cek Double Print (Mencegah duplikat history)
+        await this.fetchManifestHistory();
+        const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
 
-    // 2. Cek apakah resi yang dipilih SUDAH ada di history (sudah diprint di HP)
-    const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
+        if (doubleResi.length > 0) {
+            alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
+            this.refreshData(); 
+            this.selectedManifestItems = []; 
+            return; // Berhenti di sini, loading dimatikan di 'finally'
+        }
 
-    if (doubleResi.length > 0) {
-        this.isLoading = false;
-        alert(`PERINGATAN: ${doubleResi.length} resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
-        this.refreshData(); 
-        this.selectedManifestItems = []; 
-        return; 
-    }
-    // ==================================
-
-    const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
-    
-    // --- PERBAIKAN BUG DISINI ---
-    // Kita simpan ID ke dalam variabel dulu supaya bisa dipanggil di block 'catch'
-    const thisManifestId = Date.now(); 
-    
-    const historyEntry = { 
-        id: thisManifestId, // Pakai variabel yang sudah dibuat
-        courier: this.manifestCourier, 
-        timestamp: new Date().toISOString(), 
-        items: this.selectedManifestItems, 
-        itemCount: this.selectedManifestItems.length 
-    };
-    
-    this.loadingText = "Menyimpan Manifest...";
-    
-    try { 
-        // Kirim data ke Server
-        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
+        const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
         
-        // Cek jika server mengirim respon bukan JSON (kadang error HTML)
+        // --- PERBAIKAN PENTING: SIMPAN ID KE VARIABEL ---
+        const thisManifestId = Date.now(); 
+        
+        const historyEntry = { 
+            id: thisManifestId, // Gunakan variabel tadi
+            courier: this.manifestCourier, 
+            timestamp: new Date().toISOString(), 
+            items: this.selectedManifestItems, 
+            itemCount: this.selectedManifestItems.length 
+        };
+        
+        this.loadingText = "Menyimpan Manifest...";
+        
+        // Kirim ke Server
+        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
         const r = await res.json();
+        
+        // Jika server bilang gagal, lempar ke 'catch'
         if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan");
 
-        // --- SKENARIO SUKSES NORMAL ---
+        // === SKENARIO SUKSES ===
         this.manifestHistory.push(historyEntry); 
         this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
         
@@ -1105,33 +1099,40 @@ speakPaket(courier, code) {
         this.manifestTab = 'history'; 
 
     } catch(e) { 
-        // --- SKENARIO PENYELAMATAN (ERROR TAPI SUKSES) ---
-        console.log("Terjadi error koneksi, mengecek ulang server...", e);
+        // === SKENARIO ERROR KONEKSI (PENYELAMATAN) ===
+        console.log("Terjadi error koneksi, mencoba verifikasi...", e);
         this.loadingText = "Verifikasi penyimpanan...";
 
-        // Coba tarik history terbaru dari server
-        await this.fetchManifestHistory();
-
-        // Cek apakah ID manifest kita TERSIMPAN di server?
-        // SEKARANG VARIABLE 'thisManifestId' SUDAH DIKENALI
-        const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
-
-        if (isActuallySaved) {
-            // JIKA TERNYATA ADA: Berarti sukses, cuma koneksi putus di jalan.
-            // Lanjut Print Manual
-            const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
-            this.printManifestHTML(itemsToPrint, printTitle);
+        try {
+            // Cek ulang ke server: Apakah ID tadi sebenarnya masuk?
+            await this.fetchManifestHistory();
             
-            this.selectedManifestItems = []; 
-            this.manifestTab = 'history';
-        } else {
-            // JIKA BENAR-BENAR TIDAK ADA: Baru munculkan error
-            alert("Gagal menyimpan ke database. Silakan coba lagi. (Sinyal tidak stabil)"); 
+            // Perbaikan: variabel 'thisManifestId' sekarang sudah dikenali di sini (karena pakai var di atas)
+            // Namun kita harus pastikan variabelnya ada. Jika error terjadi SEBELUM var dibuat, kita skip.
+            const createdId = (typeof thisManifestId !== 'undefined') ? thisManifestId : 0;
+            const isActuallySaved = this.manifestHistory.some(h => h.id === createdId);
+
+            if (isActuallySaved && createdId !== 0) {
+                // TERNATA SUKSES (Cuma sinyal putus saat terima balasan) -> Lanjut Print
+                const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
+                const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
+                this.printManifestHTML(itemsToPrint, printTitle);
+                
+                this.selectedManifestItems = []; 
+                this.manifestTab = 'history';
+            } else {
+                // BENAR-BENAR GAGAL
+                alert("Gagal menyimpan ke database. Koneksi tidak stabil, silakan coba lagi."); 
+            }
+        } catch (errVerif) {
+            // Jika verifikasi pun gagal (internet mati total)
+            alert("Koneksi terputus total. Data tidak dapat disimpan.");
         }
+    } finally {
+        // === PASTI JALAN ===
+        // Apapun yang terjadi (Sukses/Error/Crash), loading PASTI mati.
+        this.isLoading = false;
     }
-    
-    // Pastikan loading mati apapun yang terjadi
-    this.isLoading = false;
 },
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
                 async deleteManifest(hist) {
