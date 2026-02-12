@@ -424,7 +424,32 @@
                         <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white text-slate-600 border border-slate-200 shadow-sm" x-text="tempItem.marketplace"></span>
                     </div>
                 </div>
-                
+
+                <div class="space-y-3 mb-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dokumentasi Paket</p>
+                    
+                    <div x-show="tempItem.photoUrl" class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 relative group">
+                        <img :src="tempItem.photoUrl" class="w-full h-44 object-cover cursor-pointer" @click="window.open(tempItem.photoUrl, '_blank')">
+                        <div class="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-[9px] font-bold text-slate-600 shadow-sm">UTAMA</div>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-2">
+                        <template x-for="type in ['Weight', 'P', 'L', 'T']">
+                            <div class="flex flex-col gap-1">
+                                <div class="aspect-square rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center relative group">
+                                    <img x-show="tempItem['photo' + type]" 
+                                        :src="tempItem['photo' + type]" 
+                                        class="w-full h-full object-cover cursor-pointer" 
+                                        @click="window.open(tempItem['photo' + type], '_blank')">
+                                    <i x-show="!tempItem['photo' + type]" 
+                                    :class="type === 'Weight' ? 'fas fa-balance-scale' : 'fas fa-ruler'" 
+                                    class="text-slate-300 text-xs"></i>
+                                </div>
+                                <span class="text-[8px] text-center font-bold text-slate-400" x-text="type === 'Weight' ? 'BERAT' : type"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
                 <div class="flex justify-center gap-2">
                     <button @click="tempItem.method = 'Pick Up'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Pick Up' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-400 border-slate-200'">PICK UP</button>
                     <button @click="tempItem.method = 'Drop Off'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Drop Off' ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white text-slate-400 border-slate-200'">DROP OFF</button>
@@ -798,7 +823,17 @@
                                     const d = new Date(parts[0], parts[1]-1, parts[2]);
                                     item.dayName = days[d.getDay()];
                                 }
-                                return item;
+                                
+                                // PERBAIKAN GEMINI: MAPPING FOTO YANG BENAR
+                                return {
+                                    ...item,
+                                    photoUrl: item.photoUrl || '',
+                                    photoWeight: item.photoWeight || '',
+                                    photoP: item.photoP || '',
+                                    photoL: item.photoL || '',
+                                    photoT: item.photoT || ''
+                                };
+                                // ----------------------------------------
                             }).reverse(); 
                             if(this.currentView === 'dashboard') this.updateCharts();
                         }
@@ -844,30 +879,30 @@
                     };
                     reader.readAsDataURL(file);
                 },
-// --- Sisipkan Fungsi Ini DI BAWAH processPhoto lama ---
-processMultiPhoto(event, keyName) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const MAX_WIDTH = 800; // Kompresi agar tidak berat
-            let width = img.width;
-            let height = img.height;
-            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-            canvas.width = width; canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            // Simpan ke variabel tempItem sesuai tombol yang diklik (P/L/T/Berat)
-            this.tempItem[keyName] = canvas.toDataURL('image/jpeg', 0.7);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-},
-// -----------------------------------------------------
+                // --- PERBAIKAN GEMINI: FUNGSI MULTI PHOTO ---
+                processMultiPhoto(event, keyName) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            const MAX_WIDTH = 800; // Kompresi agar tidak berat
+                            let width = img.width;
+                            let height = img.height;
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                            canvas.width = width; canvas.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                            // Simpan ke variabel tempItem sesuai tombol yang diklik (P/L/T/Berat)
+                            this.tempItem[keyName] = canvas.toDataURL('image/jpeg', 0.7);
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
+                // -----------------------------------------------------
 
                 async deleteOnlineData(type) { 
                     const dateTarget = this.filterDate;
@@ -903,11 +938,14 @@ processMultiPhoto(event, keyName) {
                     this.isEditMode = true; 
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.originalCode = item.code; 
+                    
+                    // PERBAIKAN GEMINI: COPY DATA FOTO KE MODAL
                     this.tempItem.photoBase64 = item.photoBase64 || item.photoUrl || null;
                     this.tempItem.photoWeight = item.photoWeight || null;
                     this.tempItem.photoP = item.photoP || null;
                     this.tempItem.photoL = item.photoL || null;
                     this.tempItem.photoT = item.photoT || null;
+                    // ------------------------------------------
                     
                     // Logic to extract method from marketplace string if present
                     if(this.tempItem.marketplace.includes('(Pick Up)')) {
@@ -978,7 +1016,7 @@ processMultiPhoto(event, keyName) {
 
                 async deleteSelected() {
                     if(!confirm(`Hapus ${this.selectedRows.length} item terpilih?`)) return;
-                    this.isLoading = true; this.loadingText = "Menghapus item...";
+                    this.isLoading = true; this.loadingText = "Menghapus...";
                     try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete_list', codes: this.selectedRows }) }); const r = await res.json(); alert(r.message); this.selectedRows = []; this.refreshData(); } catch(e) { alert("Gagal menghapus."); }
                     this.isLoading = false;
                 },
