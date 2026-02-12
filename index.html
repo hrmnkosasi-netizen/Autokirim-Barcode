@@ -903,12 +903,11 @@ processMultiPhoto(event, keyName) {
                     this.isEditMode = true; 
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.originalCode = item.code; 
-                    this.tempItem.photoBase64 = null;
-                    this.tempItem.photoBase64 = null;
-                    this.tempItem.photoWeight = null;
-                    this.tempItem.photoP = null;
-                    this.tempItem.photoL = null;
-                    this.tempItem.photoT = null;
+                    this.tempItem.photoBase64 = item.photoBase64 || item.photoUrl || null;
+                    this.tempItem.photoWeight = item.photoWeight || null;
+                    this.tempItem.photoP = item.photoP || null;
+                    this.tempItem.photoL = item.photoL || null;
+                    this.tempItem.photoT = item.photoT || null;
                     
                     // Logic to extract method from marketplace string if present
                     if(this.tempItem.marketplace.includes('(Pick Up)')) {
@@ -1015,7 +1014,7 @@ processMultiPhoto(event, keyName) {
                     const dayName = days[d.getDay()];
                     const fullTime = d.toLocaleTimeString('id-ID', {hour12: false});
                     const method = 'Pick Up'; 
-                    const newItem = { code: code, courier: finalCourier, marketplace: this.selectedMp, isCOD: currentIsCOD, receiver: '', destination: '', weight: '', price: defaultPrice, time: fullTime, date: dateStr, dayName: dayName, admin: this.selectedUser, method: method };
+                    const newItem = { code: code, courier: finalCourier, marketplace: this.selectedMp, isCOD: currentIsCOD, receiver: '', destination: '', weight: '', price: defaultPrice, time: fullTime, date: dateStr, dayName: dayName, admin: this.selectedUser, method: method, photoWeight: null, photoP: null, photoL: null, photoT: null, };
 
                     if(this.isBatchMode) { this.batchQueue.push(newItem); if(!this.isCameraActive) this.barcodeInput = ''; return; }
                     if (this.pcLinkEnabled && this.pcIpAddress) { fetch(`http://${this.pcIpAddress}:5000/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }), mode: 'no-cors' }).catch(err => console.log(err)); }
