@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Autokirim Barcode</title>
+    <title>Autokirim Barcode Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -294,7 +294,18 @@
                                         <div class="flex flex-wrap gap-1.5 items-center">
                                             <span class="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200" x-text="item.courier"></span>
                                             <span class="text-[9px] font-bold text-white px-2 py-0.5 rounded shadow-sm" :class="getMpColor(item.marketplace)" x-text="item.marketplace"></span>
-                                            <div x-show="item.photoUrl" @click.stop="window.open(item.photoUrl, '_blank')" class="text-blue-500 bg-blue-50 hover:bg-blue-100 p-1 rounded cursor-pointer"><i class="fas fa-image"></i></div>
+                                        </div>
+                                        
+                                        <div class="flex gap-1 mt-2">
+                                            <div x-show="item.photoUrl" @click.stop="openPhotoViewer(item.photoUrl)" 
+                                                 class="w-6 h-6 rounded bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-500 cursor-pointer hover:bg-blue-100">
+                                                <i class="fas fa-image text-[10px]"></i>
+                                            </div>
+                                            <template x-if="item.photoWeight || item.photoP || item.photoL || item.photoT">
+                                                <div class="w-6 h-6 rounded bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 cursor-pointer hover:bg-slate-100" title="Lihat 5 Foto Lengkap">
+                                                    <span class="text-[8px] font-bold">+4</span>
+                                                </div>
+                                            </template>
                                         </div>
                                     </td>
                                     <td class="p-4 align-top text-right">
@@ -425,77 +436,83 @@
                     </div>
                 </div>
 
-                <div class="space-y-3 mb-4">
+                <div class="space-y-3 mt-4 px-1">
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Dokumentasi Paket</p>
                     
-                    <div x-show="tempItem.photoUrl" class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 relative group">
-                        <img :src="tempItem.photoUrl" class="w-full h-44 object-cover cursor-pointer" @click="window.open(tempItem.photoUrl, '_blank')">
-                        <div class="absolute bottom-2 right-2 bg-white/90 px-2 py-1 rounded text-[9px] font-bold text-slate-600 shadow-sm">UTAMA</div>
+                    <div x-show="tempItem.photoUrl" class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 relative group shadow-sm">
+                        <img :src="tempItem.photoUrl" class="w-full h-44 object-cover cursor-pointer hover:scale-105 transition-transform duration-500" 
+                             @click="openPhotoViewer(tempItem.photoUrl)">
+                        <div class="absolute bottom-0 left-0 bg-blue-600 text-white text-[9px] font-bold px-3 py-1 rounded-tr-xl">FOTO UTAMA</div>
+                    </div>
+                    <div x-show="!tempItem.photoUrl" class="text-center py-4 bg-slate-100 rounded-xl border border-dashed border-slate-300 text-slate-400 text-xs italic">
+                        Belum ada foto utama
                     </div>
 
                     <div class="grid grid-cols-4 gap-2">
                         <template x-for="type in ['Weight', 'P', 'L', 'T']">
                             <div class="flex flex-col gap-1">
-                                <div class="aspect-square rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center relative group">
+                                <div class="aspect-square rounded-xl border border-slate-200 bg-white overflow-hidden flex items-center justify-center relative group cursor-pointer hover:border-blue-300 transition-colors"
+                                     @click="tempItem['photo' + type] ? openPhotoViewer(tempItem['photo' + type]) : null">
                                     <img x-show="tempItem['photo' + type]" 
-                                        :src="tempItem['photo' + type]" 
-                                        class="w-full h-full object-cover cursor-pointer" 
-                                        @click="window.open(tempItem['photo' + type], '_blank')">
-                                    <i x-show="!tempItem['photo' + type]" 
-                                    :class="type === 'Weight' ? 'fas fa-balance-scale' : 'fas fa-ruler'" 
-                                    class="text-slate-300 text-xs"></i>
+                                         :src="tempItem['photo' + type]" 
+                                         class="w-full h-full object-cover">
+                                    <div x-show="!tempItem['photo' + type]" class="flex flex-col items-center justify-center text-slate-300">
+                                        <i :class="type === 'Weight' ? 'fas fa-balance-scale' : 'fas fa-ruler'" class="text-xs mb-1"></i>
+                                        <span class="text-[8px]">-</span>
+                                    </div>
                                 </div>
-                                <span class="text-[8px] text-center font-bold text-slate-400" x-text="type === 'Weight' ? 'BERAT' : type"></span>
+                                <span class="text-[8px] text-center font-bold text-slate-400 uppercase" x-text="type === 'Weight' ? 'BERAT' : type"></span>
                             </div>
                         </template>
                     </div>
                 </div>
+                
                 <div class="flex justify-center gap-2">
                     <button @click="tempItem.method = 'Pick Up'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Pick Up' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-400 border-slate-200'">PICK UP</button>
                     <button @click="tempItem.method = 'Drop Off'" class="flex-1 py-2 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Drop Off' ? 'bg-blue-500 text-white border-blue-500 shadow-md' : 'bg-white text-slate-400 border-slate-200'">DROP OFF</button>
                 </div>
 
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <div class="flex justify-between mb-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Fisik Barang</label> <i x-show="tempItem.photoBase64" @click.stop="tempItem.photoBase64=null" class="fas fa-times text-red-500 cursor-pointer"></i></div>
-            <div class="aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputFotoUtama.click()">
-                <img x-show="tempItem.photoBase64" :src="tempItem.photoBase64" class="w-full h-full object-cover absolute">
-                <i x-show="!tempItem.photoBase64" class="fas fa-camera text-slate-400 text-xl"></i>
-            </div>
-            <input type="file" x-ref="inputFotoUtama" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoBase64')">
-        </div>
-        <div>
-            <div class="flex justify-between mb-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Timbangan</label> <i x-show="tempItem.photoWeight" @click.stop="tempItem.photoWeight=null" class="fas fa-times text-red-500 cursor-pointer"></i></div>
-            <div class="aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputFotoBerat.click()">
-                <img x-show="tempItem.photoWeight" :src="tempItem.photoWeight" class="w-full h-full object-cover absolute">
-                <i x-show="!tempItem.photoWeight" class="fas fa-weight-hanging text-slate-400 text-xl"></i>
-            </div>
-            <input type="file" x-ref="inputFotoBerat" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoWeight')">
-        </div>
-    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <div class="flex justify-between mb-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Fisik Barang</label> <i x-show="tempItem.photoBase64" @click.stop="tempItem.photoBase64=null" class="fas fa-times text-red-500 cursor-pointer"></i></div>
+                            <div class="aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputFotoUtama.click()">
+                                <img x-show="tempItem.photoBase64" :src="tempItem.photoBase64" class="w-full h-full object-cover absolute">
+                                <i x-show="!tempItem.photoBase64" class="fas fa-camera text-slate-400 text-xl"></i>
+                            </div>
+                            <input type="file" x-ref="inputFotoUtama" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoBase64')">
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1"><label class="text-[10px] font-bold text-slate-400 uppercase">Timbangan</label> <i x-show="tempItem.photoWeight" @click.stop="tempItem.photoWeight=null" class="fas fa-times text-red-500 cursor-pointer"></i></div>
+                            <div class="aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputFotoBerat.click()">
+                                <img x-show="tempItem.photoWeight" :src="tempItem.photoWeight" class="w-full h-full object-cover absolute">
+                                <i x-show="!tempItem.photoWeight" class="fas fa-weight-hanging text-slate-400 text-xl"></i>
+                            </div>
+                            <input type="file" x-ref="inputFotoBerat" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoWeight')">
+                        </div>
+                    </div>
 
-    <div>
-        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Dimensi (P x L x T)</label>
-        <div class="grid grid-cols-3 gap-2">
-            <div class="aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputP.click()">
-                <img x-show="tempItem.photoP" :src="tempItem.photoP" class="w-full h-full object-cover absolute">
-                <span x-show="!tempItem.photoP" class="font-bold text-slate-300 text-lg">P</span>
-                <input type="file" x-ref="inputP" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoP')">
-            </div>
-            <div class="aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputL.click()">
-                <img x-show="tempItem.photoL" :src="tempItem.photoL" class="w-full h-full object-cover absolute">
-                <span x-show="!tempItem.photoL" class="font-bold text-slate-300 text-lg">L</span>
-                <input type="file" x-ref="inputL" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoL')">
-            </div>
-            <div class="aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputT.click()">
-                <img x-show="tempItem.photoT" :src="tempItem.photoT" class="w-full h-full object-cover absolute">
-                <span x-show="!tempItem.photoT" class="font-bold text-slate-300 text-lg">T</span>
-                <input type="file" x-ref="inputT" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoT')">
-            </div>
-        </div>
-    </div>
-</div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Dimensi (P x L x T)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputP.click()">
+                                <img x-show="tempItem.photoP" :src="tempItem.photoP" class="w-full h-full object-cover absolute">
+                                <span x-show="!tempItem.photoP" class="font-bold text-slate-300 text-lg">P</span>
+                                <input type="file" x-ref="inputP" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoP')">
+                            </div>
+                            <div class="aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputL.click()">
+                                <img x-show="tempItem.photoL" :src="tempItem.photoL" class="w-full h-full object-cover absolute">
+                                <span x-show="!tempItem.photoL" class="font-bold text-slate-300 text-lg">L</span>
+                                <input type="file" x-ref="inputL" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoL')">
+                            </div>
+                            <div class="aspect-square rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center cursor-pointer relative overflow-hidden" @click="$refs.inputT.click()">
+                                <img x-show="tempItem.photoT" :src="tempItem.photoT" class="w-full h-full object-cover absolute">
+                                <span x-show="!tempItem.photoT" class="font-bold text-slate-300 text-lg">T</span>
+                                <input type="file" x-ref="inputT" class="hidden" accept="image/*" capture="environment" @change="processMultiPhoto($event, 'photoT')">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                     <div class="flex justify-between items-center mb-3">
@@ -693,11 +710,9 @@
                 showQrModal: false, isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null, selectedRows: [],
                 pcLinkEnabled: localStorage.getItem('pcLinkEnabled') === 'true', pcIpAddress: localStorage.getItem('pcIpAddress') || '',
 
-                // === TAMBAHAN BARU UNTUK MODAL PRINT ===
                 showPrintModal: false,
                 pendingPrintData: [],
                 pendingPrintTitle: '',
-                // =======================================
 
                 couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo','Lion Parcel (Reg Pack)','Lion Parcel (Jago Pack)', 'SAPX', 'Sentral Cargo', 'Paxel', 'POS Aja'],
                 marketplaces: [{name:'Shopee',icon:'fa-shopping-bag'},{name:'Tokopedia',icon:'fa-store'},{name:'Lazada',icon:'fa-heart'},{name:'TikTok',icon:'fa-music'},{name:'Manual',icon:'fa-pen'}],
@@ -726,20 +741,15 @@
                     this.$watch('pcLinkEnabled', val => localStorage.setItem('pcLinkEnabled', val));
                     this.$watch('pcIpAddress', val => localStorage.setItem('pcIpAddress', val));
 
-                    // === TAMBAHAN BARU: AUTO SYNC ===
-                    // 1. Refresh otomatis saat tab dibuka/diklik kembali
                     document.addEventListener("visibilitychange", () => {
                         if (document.visibilityState === 'visible' && this.isLoggedIn) {
-                            console.log("Tab aktif, refresh data...");
                             this.refreshData(true);
                             this.fetchManifestHistory();
                         }
                     });
 
-                    // 2. Refresh otomatis setiap 60 detik (1 menit) untuk menjaga data tetap update
                     setInterval(() => {
                         if (this.isLoggedIn && !this.showDetailModal && !this.isEditMode) {
-                            // Hanya refresh jika tidak sedang edit/buka modal
                             this.refreshData(true);
                             this.fetchManifestHistory();
                         }
@@ -774,28 +784,11 @@
                 },
                 logout() { 
                     if(confirm('Keluar?')) { 
-                        // 1. Ubah status login
                         this.isLoggedIn = false; 
-                        
-                        // 2. Hapus sesi penyimpanan
                         sessionStorage.removeItem('autokirim_session'); 
                         sessionStorage.removeItem('autokirim_user'); 
-                        
-                        // 3. RESET FORMULIR (SOLUSI BUG)
-                        this.selectedUser = '';  // Reset dropdown ke "-- Siapa kamu? --"
-                        this.loginPass = '';     // Kosongkan kolom password
-                        
-                        // 4. Matikan kamera jika masih nyala (Pencegahan error)
-                        if(this.isCameraActive) {
-                            try {
-                                if(this.html5QrCode) this.html5QrCode.stop().then(() => { 
-                                    this.html5QrCode.clear(); 
-                                    this.isCameraActive = false; 
-                                });
-                            } catch(e) { 
-                                this.isCameraActive = false; 
-                            }
-                        }
+                        this.selectedUser = ''; this.loginPass = '';     
+                        if(this.isCameraActive) { try { if(this.html5QrCode) this.html5QrCode.stop().then(() => { this.html5QrCode.clear(); this.isCameraActive = false; }); } catch(e) { this.isCameraActive = false; } }
                     } 
                 },
                 fixDateFromDB(dateStr) {
@@ -809,7 +802,6 @@
 
                 async refreshData(isSilent = false) {
                     if (!this.apiUrl) return;
-                    // HANYA tampilkan loading jika BUKAN mode silent
                     if (!isSilent) this.isLoading = true;
                     try {
                         const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'get' }) });
@@ -824,7 +816,7 @@
                                     item.dayName = days[d.getDay()];
                                 }
                                 
-                                // PERBAIKAN GEMINI: MAPPING FOTO YANG BENAR
+                                // === PERBAIKAN UTAMA: MAPPING DATA FOTO LENGKAP ===
                                 return {
                                     ...item,
                                     photoUrl: item.photoUrl || '',
@@ -833,7 +825,7 @@
                                     photoL: item.photoL || '',
                                     photoT: item.photoT || ''
                                 };
-                                // ----------------------------------------
+                                // ==================================================
                             }).reverse(); 
                             if(this.currentView === 'dashboard') this.updateCharts();
                         }
@@ -856,11 +848,9 @@
                    } catch(e) { console.log('Manifest Fetch Error', e); }
                 },
 
-                // PHOTO LOGIC
                 processPhoto(event) {
                     const file = event.target.files[0];
                     if (!file) return;
-                    
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const img = new Image();
@@ -879,7 +869,8 @@
                     };
                     reader.readAsDataURL(file);
                 },
-                // --- PERBAIKAN GEMINI: FUNGSI MULTI PHOTO ---
+
+                // --- FUNGSI MULTI FOTO ---
                 processMultiPhoto(event, keyName) {
                     const file = event.target.files[0];
                     if (!file) return;
@@ -889,20 +880,32 @@
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
                             const ctx = canvas.getContext('2d');
-                            const MAX_WIDTH = 800; // Kompresi agar tidak berat
+                            const MAX_WIDTH = 800; 
                             let width = img.width;
                             let height = img.height;
                             if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                             canvas.width = width; canvas.height = height;
                             ctx.drawImage(img, 0, 0, width, height);
-                            // Simpan ke variabel tempItem sesuai tombol yang diklik (P/L/T/Berat)
                             this.tempItem[keyName] = canvas.toDataURL('image/jpeg', 0.7);
                         };
                         img.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
                 },
-                // -----------------------------------------------------
+
+                // --- FUNGSI LIHAT FOTO TANPA DOWNLOAD ---
+                openPhotoViewer(url) {
+                    if (!url) return;
+                    let viewUrl = url;
+                    // Jika link Google Drive download, ubah jadi view
+                    if(url.includes('drive.google.com') && url.includes('export=download')) {
+                        viewUrl = url.replace('export=download', 'export=view');
+                    } else if (url.includes('drive.google.com') && url.includes('/view')) {
+                        // Sudah benar
+                    }
+                    window.open(viewUrl, '_blank');
+                },
+                // ----------------------------------------
 
                 async deleteOnlineData(type) { 
                     const dateTarget = this.filterDate;
@@ -920,13 +923,8 @@
                     const rate = this.commissionRates[this.tempItem.courier] || this.commissionRates['Default'];
                     this.tempItem.profit = Math.round((parseInt(this.tempItem.price) || 0) * rate);
 
-                    // FIX: Ensure marketplace string is clean before sending
                     let cleanMarketplace = this.tempItem.marketplace;
-                    // Remove existing method strings if any to prevent duplication like "Shopee (Pick Up) (Pick Up)"
                     cleanMarketplace = cleanMarketplace.replace(/ \((Pick Up|Drop Off)\)/gi, "");
-                    
-                    // We send the clean name. Assuming Google Script handles appending method if needed, 
-                    // or stores method in separate column (as seen in screenshot Col L).
                     this.tempItem.marketplace = cleanMarketplace;
 
                     try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: this.isEditMode ? 'edit' : 'add', data: this.tempItem }) }); const r = await res.json(); if (r.status === 'success') { this.triggerFeedback('success'); await this.refreshData(); } else { alert(r.message); } } catch (e) { alert("Error: " + e); }
@@ -939,15 +937,13 @@
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.originalCode = item.code; 
                     
-                    // PERBAIKAN GEMINI: COPY DATA FOTO KE MODAL
+                    // MAPPING FOTO KE MODAL EDIT
                     this.tempItem.photoBase64 = item.photoBase64 || item.photoUrl || null;
                     this.tempItem.photoWeight = item.photoWeight || null;
                     this.tempItem.photoP = item.photoP || null;
                     this.tempItem.photoL = item.photoL || null;
                     this.tempItem.photoT = item.photoT || null;
-                    // ------------------------------------------
                     
-                    // Logic to extract method from marketplace string if present
                     if(this.tempItem.marketplace.includes('(Pick Up)')) {
                         this.tempItem.method = 'Pick Up';
                         this.tempItem.marketplace = this.tempItem.marketplace.replace(' (Pick Up)', '');
@@ -955,7 +951,6 @@
                         this.tempItem.method = 'Drop Off';
                         this.tempItem.marketplace = this.tempItem.marketplace.replace(' (Drop Off)', '');
                     } 
-                    // If no method in string, rely on existing method property or default
                     if(!this.tempItem.method) this.tempItem.method = 'Pick Up';
                     
                     this.showDetailModal = true; 
@@ -988,7 +983,6 @@
                 get scanStatusClass() { return this.scanStatus === 'success' ? 'flash-success' : (this.scanStatus === 'error' ? 'flash-error' : ''); },
                 getMpColor(mp) { return {'Shopee':'bg-orange-500','Tokopedia':'bg-green-500','Lazada':'bg-blue-600','TikTok':'bg-black'}[mp] || 'bg-slate-400'; },
                 
-                // FIX: Better courier matching logic
                 getCourierColor(c) {
                     if(!c) return 'border-gray-300';
                     const up = c.toUpperCase();
@@ -1043,7 +1037,6 @@
                     this.speakPaket(this.selectedCourier, code);
                     let finalCourier = this.selectedCourier;
                     
-                    // FIX: Logic COD respects the UI toggle now
                     let currentIsCOD = this.isCODInput; 
                     let defaultPrice = (this.selectedMp === 'Manual' && !currentIsCOD) ? 0 : 0;
                     const dateStr = this.getJakartaDateISO();
@@ -1063,57 +1056,17 @@
                 
                 triggerFeedback(type) { this.scanStatus = type; playBeep(type); setTimeout(() => this.scanStatus = 'idle', 800); },
 
-                // --- FITUR SUARA ROBOT (UPDATE EJAAN) ---
                 speakPaket(courier, code) {
                     if (!('speechSynthesis' in window)) return;
-
-                    let sayCourier = courier; // Default (baca apa adanya)
+                    let sayCourier = courier; 
                     const c = courier.toUpperCase();
-
-                    // 1. Kustomisasi Ejaan Nama Kurir
-                    if (c.includes('J&T CARGO')) {
-                        sayCourier = "Je En Te Kargo";
-                    } else if (c.includes('J&T')) {
-                        sayCourier = "Je En Te";
-                    } else if (c.includes('JNE')) {
-                        sayCourier = "Je En E";
-                    } else if (c.includes('ID EXPRESS')) {
-                        sayCourier = "Ai Di Ekspres"; // Biar dibaca inggris "ID"
-                    } else if (c.includes('SICEPAT')) {
-                        sayCourier = "Si Cepat";
-                    } else if (c.includes('SPX')) {
-                        sayCourier = "Shopee"; // Atau bisa ganti "Es Pe Ex"
-                    } else if (c.includes('LAZADA') || c.includes('LEX')) {
-                        sayCourier = "Lazada";
-                    } else if (c.includes('ANTERAJA')) {
-                        sayCourier = "Anter Aja";
-                    } else if (c.includes('NINJA')) {
-                        sayCourier = "Ninja";
-                    } else if (c.includes('LION')) {
-                        sayCourier = "Laion Parsel"; // Biar dibaca "Lion" bukan "Lion" (hewan)
-                    } else if (c.includes('SAPX') || c.includes('SAP')) {
-                        sayCourier = "Es A Pe";
-                    } else if (c.includes('SENTRAL')) {
-                        sayCourier = "Sentral Kargo";
-                    } else if (c.includes('PAXEL')) {
-                        sayCourier = "Paksel";
-                    } else if (c.includes('POS')) {
-                        sayCourier = "Pos Aja";
-                    }
-
-                    // 2. Eja Resi (Pisahkan per karakter)
-                    // Menggunakan regex untuk memisahkan huruf dan angka, lalu digabung spasi
-                    // Contoh: JP123 -> J P 1 2 3
+                    if (c.includes('J&T CARGO')) { sayCourier = "Je En Te Kargo"; } else if (c.includes('J&T')) { sayCourier = "Je En Te"; } else if (c.includes('JNE')) { sayCourier = "Je En E"; } else if (c.includes('ID EXPRESS')) { sayCourier = "Ai Di Ekspres"; } else if (c.includes('SICEPAT')) { sayCourier = "Si Cepat"; } else if (c.includes('SPX')) { sayCourier = "Shopee"; } else if (c.includes('LAZADA') || c.includes('LEX')) { sayCourier = "Lazada"; } else if (c.includes('ANTERAJA')) { sayCourier = "Anter Aja"; } else if (c.includes('NINJA')) { sayCourier = "Ninja"; } else if (c.includes('LION')) { sayCourier = "Laion Parsel"; } else if (c.includes('SAPX') || c.includes('SAP')) { sayCourier = "Es A Pe"; } else if (c.includes('SENTRAL')) { sayCourier = "Sentral Kargo"; } else if (c.includes('PAXEL')) { sayCourier = "Paksel"; } else if (c.includes('POS')) { sayCourier = "Pos Aja"; }
                     let sayCode = code.split('').join(' '); 
-
-                    // 3. Eksekusi Suara
                     const msg = new SpeechSynthesisUtterance();
-                    // Tambahkan jeda koma (,) agar ada napas sedikit antara nama kurir dan resi
                     msg.text = `${sayCourier}, ${sayCode}`; 
                     msg.lang = 'id-ID'; 
-                    msg.rate = 0.9; // Sedikit diperlambat biar lebih jelas (0.9)
+                    msg.rate = 0.9; 
                     msg.pitch = 1.0; 
-
                     window.speechSynthesis.cancel(); 
                     window.speechSynthesis.speak(msg);
                 },
@@ -1141,7 +1094,6 @@
                     const l=document.createElement("a"); l.href="data:text/csv;charset=utf-8,"+encodeURI(c); l.download=`Laporan_${this.filterDate}.csv`; document.body.appendChild(l); l.click(); l.remove();
                 },
 
-                // MANIFEST LOGIC
                 openManifestManager() { if (this.activeFilter !== 'ALL') this.manifestCourier = this.activeFilter; this.manifestTab = 'new'; this.showManifestManager = true; this.selectedManifestItems = []; },
                 isPrinted(code) { return this.processedResis.includes(code); },
                 
@@ -1160,170 +1112,32 @@
                 
                 async createManifest() {
                     if (this.selectedManifestItems.length === 0) return;
-
-                    // 1. Cek Double
-                    this.isLoading = true; 
-                    this.loadingText = "Memvalidasi data...";
-                    
+                    this.isLoading = true; this.loadingText = "Memvalidasi data...";
                     await this.fetchManifestHistory();
                     const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code));
-
-                    if (doubleResi.length > 0) {
-                        this.isLoading = false;
-                        alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`);
-                        this.refreshData(); 
-                        this.selectedManifestItems = []; 
-                        return; 
-                    }
-
-                    // 2. Siapkan Data
+                    if (doubleResi.length > 0) { this.isLoading = false; alert(`PERINGATAN: Resi sudah diprint sebelumnya!\n\nResi: ${doubleResi.join(', ')}\n\nHalaman akan direfresh.`); this.refreshData(); this.selectedManifestItems = []; return; }
                     const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code));
                     const thisManifestId = Date.now();
                     const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier;
-                    
-                    const historyEntry = { 
-                        id: thisManifestId,
-                        courier: this.manifestCourier, 
-                        timestamp: new Date().toISOString(), 
-                        items: this.selectedManifestItems, 
-                        itemCount: this.selectedManifestItems.length 
-                    };
-                    
+                    const historyEntry = { id: thisManifestId, courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length };
                     let isSuccess = false;
-
-                    // 3. Kirim ke Server
                     this.loadingText = "Menyimpan Manifest...";
-                    try { 
-                        const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); 
-                        const r = await res.json();
-                        if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan");
-                        isSuccess = true;
-                    } catch(e) { 
-                        // Cek Verifikasi jika error koneksi
-                        console.log("Koneksi putus, verifikasi ulang...", e);
-                        this.loadingText = "Verifikasi penyimpanan...";
-                        try {
-                            await this.fetchManifestHistory();
-                            const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId);
-                            if (isActuallySaved) { isSuccess = true; } 
-                            else { alert("Gagal menyimpan. Sinyal tidak stabil."); }
-                        } catch (errVerif) { alert("Koneksi terputus total."); }
-                    }
-
-                    // 4. Update State & Matikan Loading
-                    if (isSuccess) {
-                        if (!this.manifestHistory.some(h => h.id === thisManifestId)) { this.manifestHistory.push(historyEntry); }
-                        this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; 
-                        this.selectedManifestItems = []; 
-                        this.manifestTab = 'history';
-                        
-                        // === PERUBAHAN UTAMA: SIMPAN DATA KE MODAL, JANGAN PRINT LANGSUNG ===
-                        this.pendingPrintData = itemsToPrint;
-                        this.pendingPrintTitle = printTitle;
-                        this.showPrintModal = true; // Munculkan Modal Sukses
-                        // ====================================================================
-                    }
-
+                    try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'save_manifest', data: historyEntry }) }); const r = await res.json(); if(r.status !== 'success') throw new Error(r.message || "Gagal menyimpan"); isSuccess = true; } 
+                    catch(e) { console.log("Koneksi putus, verifikasi ulang...", e); this.loadingText = "Verifikasi penyimpanan..."; try { await this.fetchManifestHistory(); const isActuallySaved = this.manifestHistory.some(h => h.id === thisManifestId); if (isActuallySaved) { isSuccess = true; } else { alert("Gagal menyimpan. Sinyal tidak stabil."); } } catch (errVerif) { alert("Koneksi terputus total."); } }
+                    if (isSuccess) { if (!this.manifestHistory.some(h => h.id === thisManifestId)) { this.manifestHistory.push(historyEntry); } this.processedResis = [...this.processedResis, ...this.selectedManifestItems]; this.selectedManifestItems = []; this.manifestTab = 'history'; this.pendingPrintData = itemsToPrint; this.pendingPrintTitle = printTitle; this.showPrintModal = true; }
                     this.isLoading = false;
                 },
 
-                // FUNGSI UNTUK PRINT DARI TOMBOL (ANTI BLOKIR BROWSER HP)
-                execFinalPrint() {
-                    this.showPrintModal = false; // Tutup modal
-                    this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle);
-                },
-
+                execFinalPrint() { this.showPrintModal = false; this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle); },
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
-                async deleteManifest(hist) {
-                    if(!confirm('Hapus riwayat manifest ini?')) return; this.isLoading = true;
-                    try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete_manifest', id: hist.id }) }); const r = await res.json(); if(r.status === 'success') { this.manifestHistory = this.manifestHistory.filter(h => h.id !== hist.id); let newProcessed = []; this.manifestHistory.forEach(h => { newProcessed = [...newProcessed, ...h.items]; }); this.processedResis = newProcessed; alert('Manifest dihapus.'); } } catch(e) { alert('Error koneksi.'); }
-                    this.isLoading = false;
-                },
+                async deleteManifest(hist) { if(!confirm('Hapus riwayat manifest ini?')) return; this.isLoading = true; try { const res = await fetch(this.apiUrl, { method: 'POST', body: JSON.stringify({ action: 'delete_manifest', id: hist.id }) }); const r = await res.json(); if(r.status === 'success') { this.manifestHistory = this.manifestHistory.filter(h => h.id !== hist.id); let newProcessed = []; this.manifestHistory.forEach(h => { newProcessed = [...newProcessed, ...h.items]; }); this.processedResis = newProcessed; alert('Manifest dihapus.'); } } catch(e) { alert('Error koneksi.'); } this.isLoading = false; },
+                
                 printManifestHTML(data, cn) {
                     if (data.length === 0) return alert("Data tidak ditemukan.");
                     const tQ = data.length;
                     const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
                     const w = window.open('', '_blank');
-
-                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>
-                        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}
-                        .company-header{text-align:center;margin-bottom:10px}
-                        .company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}
-                        .company-address{font-size:12px;color:#000;margin-bottom:1px}
-                        .report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}
-                        .report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}
-                        .report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}
-                        .meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}
-                        table{width:100%;border-collapse:collapse;margin-bottom:20px}
-                        th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}
-                        th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}
-                        td{font-size:12px}
-                        .resi-col{font-size:14px;font-weight:900;font-family:monospace}
-                        .footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}
-                        .sign-box{text-align:center;width:45%}
-                        .sign-line{margin-top:50px;border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%}
-                        .printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}
-                    </style></head><body>
-                    <div class="company-header">
-                        <div class="company-name">AUTOKIRIM TELUK GONG 2</div>
-                        <div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div>
-                        <div class="company-address">No Telp. 085760035568</div>
-                        <div class="pos-id">Pickup POS : AK00031858</div>
-                    </div>
-                    <div class="report-title">
-                        <h2>PICKUP MANIFEST</h2>
-                        <h3>${cn.toUpperCase()}</h3>
-                    </div>
-                    <div class="meta-info">
-                        <div>${timeP}</div>
-                        <div>Total: ${tQ}</div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 5%; text-align:center;">No</th>
-                                <th style="width: 12%">Waktu Scan</th>
-                                <th style="width: 25%">No. Resi</th>
-                                <th style="width: 28%">Nama Penerima</th>
-                                <th style="width: 15%">Market</th>
-                                <th style="width: 15%">Tipe</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.map((item, index) => {
-                                let cleanMarket = item.marketplace || '';
-                                cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
-                                
-                                return `
-                                <tr>
-                                    <td style="text-align:center">${index + 1}</td>
-                                    <td style="font-size:11px;">
-                                        ${this.formatDateID(item.date)}<br>
-                                        <span style="font-weight:bold; color:#555">${item.time}</span>
-                                    </td>
-                                    <td class="resi-col">
-                                        ${item.code}<br>
-                                        <span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span>
-                                    </td>
-                                    <td>${item.receiver || '-'}</td>
-                                    <td>
-                                        ${cleanMarket}<br>
-                                        <span style="font-size:10px; font-weight:bold; color:#444">
-                                            (${item.method || 'Pick Up'})
-                                        </span>
-                                    </td>
-                                    <td>${item.isCOD ? 'COD' : '(NON COD)'}</td>
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                    <div class="footer">
-                        <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div>
-                        <div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div>
-                    </div>
-                    <div class="printed-by">Printed by : ${this.selectedUser}</div>
-                    <script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
-                    
+                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%}.sign-line{margin-top:50px;border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div class="sign-line">( Tanda Tangan )</div></div><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Kurir / Driver</p><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`);
                     w.document.close();
                 },
 
