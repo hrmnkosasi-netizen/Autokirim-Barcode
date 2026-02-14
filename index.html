@@ -17,10 +17,12 @@
         
         #reader { width: 100%; height: 100%; background: #000; border-radius: 16px; overflow: hidden; }
         #reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+        
         .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; align-items: center; justify-content: center; }
         .scan-box { width: 90%; height: 35%; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); border: 2px solid rgba(255,255,255,0.5); position: relative; transition: all 0.2s; }
         .laser { position: absolute; left: 2%; width: 96%; height: 2px; background: #ef4444; box-shadow: 0 0 15px #ef4444; top: 50%; animation: laserAnim 2s infinite ease-in-out; }
         @keyframes laserAnim { 0% { transform: translateY(-20px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+        
         .flash-success .scan-box { border: 4px solid #22c55e !important; }
         .flash-error .scan-box { border: 4px solid #dc2626 !important; }
 
@@ -83,6 +85,7 @@
     </div>
 
     <div x-show="isLoggedIn" class="flex flex-col md:flex-row w-full md:h-full" x-cloak>
+        
         <header class="md:hidden bg-gradient-to-r from-rose-600 via-red-600 to-orange-500 text-white p-3 shadow-md flex justify-between items-center z-30 relative shrink-0 sticky top-0">
             <div class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner border border-white/30"><i class="fas fa-box-open text-sm"></i></div>
@@ -96,6 +99,7 @@
         </header>
 
         <aside class="w-full md:w-[400px] bg-white/80 backdrop-blur-md border-r border-slate-200 flex flex-col z-20 shadow-2xl shrink-0 h-auto md:h-full" x-show="currentView === 'home' || currentView === 'dashboard'">
+            
             <div class="hidden md:flex h-20 bg-gradient-to-r from-rose-600 to-orange-600 text-white items-center px-6 justify-between shrink-0 shadow-md relative overflow-hidden">
                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div class="flex items-center gap-3 relative z-10">
@@ -109,6 +113,7 @@
             </div>
             
             <div class="md:flex-1 md:overflow-y-auto p-5 space-y-5">
+                
                 <div class="hidden md:flex bg-slate-100 p-1 rounded-xl mb-2 shadow-inner">
                     <button @click="currentView = 'home'" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2" :class="currentView === 'home' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'"><i class="fas fa-list"></i> DATA SCAN</button>
                     <button @click="toggleView()" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2" :class="currentView === 'dashboard' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'"><i class="fas fa-chart-pie"></i> STATISTIK</button>
@@ -141,6 +146,7 @@
                         <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1"><i class="fas fa-sliders-h text-rose-500"></i> Pengaturan</label>
                         <span class="text-[10px] bg-rose-50 text-rose-600 px-2 py-1 rounded-md border border-rose-100 font-bold shadow-sm">Scan Mode</span>
                     </div>
+                    
                     <div class="flex gap-2 overflow-x-auto hide-scroll mb-3 pb-1 cursor-grab active:cursor-grabbing select-none" x-data="dragScroll()" @mousedown="start($event)" @mouseleave="stop()" @mouseup="stop()" @mousemove="move($event)">
                         <template x-for="mp in marketplaces" :key="mp.name">
                             <button @click="if(!isDragging) selectedMp = mp.name" class="whitespace-nowrap px-4 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 shrink-0 shadow-sm" 
@@ -149,6 +155,7 @@
                             </button>
                         </template>
                     </div>
+                    
                     <div class="space-y-3">
                         <div class="bg-slate-100 p-1 rounded-xl flex shadow-inner">
                             <button @click="isCODInput = true" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all" :class="isCODInput ? 'bg-white text-green-600 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'">COD (Bayar)</button>
@@ -453,9 +460,11 @@
                             <div class="flex flex-col gap-1">
                                 <div class="aspect-square rounded-xl border border-slate-200 bg-white overflow-hidden flex items-center justify-center relative group cursor-pointer hover:border-blue-300 transition-colors"
                                      @click="tempItem['photo' + type] ? openPhotoViewer(tempItem['photo' + type]) : null">
+                                    
                                     <img x-show="tempItem['photo' + type]" 
                                          :src="tempItem['photo' + type]" 
                                          class="w-full h-full object-cover">
+                                    
                                     <div x-show="!tempItem['photo' + type]" class="flex flex-col items-center justify-center text-slate-300">
                                         <i :class="type === 'Weight' ? 'fas fa-balance-scale' : 'fas fa-ruler'" class="text-xs mb-1"></i>
                                         <span class="text-[8px]">-</span>
@@ -816,7 +825,7 @@
                                     item.dayName = days[d.getDay()];
                                 }
                                 
-                                // === PERBAIKAN UTAMA: MAPPING DATA FOTO LENGKAP ===
+                                // === MAPPING DATA FOTO LENGKAP ===
                                 return {
                                     ...item,
                                     photoUrl: item.photoUrl || '',
@@ -825,7 +834,7 @@
                                     photoL: item.photoL || '',
                                     photoT: item.photoT || ''
                                 };
-                                // ==================================================
+                                // =================================
                             }).reverse(); 
                             if(this.currentView === 'dashboard') this.updateCharts();
                         }
@@ -1048,7 +1057,17 @@
                     const newItem = { code: code, courier: finalCourier, marketplace: this.selectedMp, isCOD: currentIsCOD, receiver: '', destination: '', weight: '', price: defaultPrice, time: fullTime, date: dateStr, dayName: dayName, admin: this.selectedUser, method: method, photoWeight: null, photoP: null, photoL: null, photoT: null, };
 
                     if(this.isBatchMode) { this.batchQueue.push(newItem); if(!this.isCameraActive) this.barcodeInput = ''; return; }
-                    if (this.pcLinkEnabled && this.pcIpAddress) { fetch(`http://${this.pcIpAddress}:5000/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code }), mode: 'no-cors' }).catch(err => console.log(err)); }
+                    
+                    // --- PC LINK CONNECTION CHECK ---
+                    if (this.pcLinkEnabled && this.pcIpAddress) { 
+                        fetch(`http://${this.pcIpAddress}:5000/scan`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ code: code }), 
+                            mode: 'no-cors' 
+                        }).catch(err => console.log('PC Link Error', err)); 
+                    }
+                    // --------------------------------
 
                     this.isEditMode = false; this.tempItem = newItem;
                     setTimeout(() => { this.showDetailModal = true; setTimeout(() => document.getElementById('receiverInput')?.focus(), 100); this.barcodeInput = ''; }, 300);
