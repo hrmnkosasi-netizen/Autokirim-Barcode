@@ -62,10 +62,11 @@
         .img-preview-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 0; }
         .btn-delete-photo { position: absolute; top: -5px; right: -5px; z-index: 20; background-color: #ef4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         
-        /* Mobile Tab Nav Padding */
+        /* Mobile Tab Nav Padding & Custom Scrollbar untuk PC */
         .pb-nav { padding-bottom: 90px; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-mesh flex flex-col min-h-screen md:h-screen md:overflow-hidden" x-data="appData()" x-init="initApp()">
@@ -101,7 +102,7 @@
         </div>
     </div>
 
-    <div x-show="isLoggedIn" class="flex flex-col md:flex-row w-full flex-1 min-w-0 max-w-full" x-cloak>
+    <div x-show="isLoggedIn" class="flex flex-col md:flex-row w-full flex-1 min-w-0 min-h-0 max-w-full" x-cloak>
         
         <header class="md:hidden bg-white text-slate-800 p-3 shadow-sm flex justify-between items-center z-30 sticky top-0 border-b border-slate-200 shrink-0 w-full">
             <div class="flex items-center gap-3">
@@ -119,7 +120,7 @@
             </div>
         </header>
         
-        <aside class="w-full max-w-[100vw] overflow-x-hidden md:w-[400px] bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 h-auto md:h-full md:overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.02)]" x-show="currentView === 'home'" x-cloak>
+        <aside class="w-full max-w-[100vw] overflow-x-hidden md:w-[400px] bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 h-auto md:h-full md:overflow-hidden shadow-[4px_0_24px_rgba(0,0,0,0.02)] min-h-0" x-show="currentView === 'home'" x-cloak>
             <div class="hidden md:flex h-20 bg-white border-b border-slate-200 items-center px-6 justify-between shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-amber-500">
@@ -136,14 +137,14 @@
                 </div>
             </div>
 
-            <div class="flex-1 md:overflow-y-auto p-4 md:p-5 space-y-5 hide-scroll bg-slate-50/50 w-full">
+            <div class="flex-1 overflow-y-visible md:overflow-y-auto p-4 md:p-5 space-y-5 custom-scrollbar bg-slate-50/50 w-full min-h-0 pb-24 md:pb-5">
                 
-                <div class="hidden md:flex bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                <div class="hidden md:flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 shrink-0">
                     <button @click="switchView('home')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white text-amber-600 shadow-sm border border-slate-200"><i class="fas fa-list"></i> DATA SCAN</button>
                     <button @click="switchView('dashboard')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700"><i class="fas fa-chart-pie"></i> STATISTIK</button>
                 </div>
 
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full shrink-0">
                     <div class="flex justify-between items-center mb-3">
                         <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-sliders-h text-amber-500"></i> Konfigurasi</label>
                     </div>
@@ -168,7 +169,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 w-full relative group">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 w-full relative group shrink-0">
                     <div id="reader" style="position: absolute; width: 300px; height: 300px; opacity: 0; pointer-events: none; left: -9999px;"></div>
                     
                     <div @click="$refs.scanFileInput.click()" class="w-full h-32 md:h-36 bg-slate-50 hover:bg-slate-100 rounded-xl border-2 border-dashed border-amber-400 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden" :class="scanStatusClass">
@@ -181,7 +182,7 @@
                     <input type="file" x-ref="scanFileInput" accept="image/*" class="hidden" @change="processScanImage($event)">
                 </div>
 
-                <div class="mt-2 flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm w-full">
+                <div class="mt-2 flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm w-full shrink-0">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-bolt text-amber-500"></i>
                         <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wide">Scan Massal</span>
@@ -191,7 +192,7 @@
                     </button>
                 </div>
                 
-                <div x-show="isBatchMode && batchQueue.length > 0" class="mt-2 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm modal-enter w-full">
+                <div x-show="isBatchMode && batchQueue.length > 0" class="mt-2 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm modal-enter w-full shrink-0">
                     <div class="flex justify-between items-center mb-3 pb-3 border-b border-amber-200/50">
                         <span class="text-xs font-bold text-amber-800">Antrian: <span x-text="batchQueue.length" class="text-lg mx-1"></span> Paket</span>
                         <div class="flex gap-2">
@@ -209,12 +210,12 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-4 w-full">
+                <div class="flex gap-2 mt-4 w-full shrink-0">
                     <input type="text" id="barcodeInput" x-model="barcodeInput" @keydown.enter="preProcessScan()" class="w-full light-input text-sm font-bold rounded-xl p-3.5 uppercase font-mono placeholder:text-slate-400" placeholder="KETIK RESI MANUAL..." autocomplete="off">
                     <button @click="preProcessScan()" class="btn-gold px-6 rounded-xl shadow-md"><i class="fas fa-arrow-right text-white"></i></button>
                 </div>
 
-                <div class="pt-5 border-t border-slate-200 grid grid-cols-2 gap-3 w-full">
+                <div class="pt-5 border-t border-slate-200 grid grid-cols-2 gap-3 w-full shrink-0">
                     <button @click="shareToWA()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-emerald-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
                         <i class="fab fa-whatsapp text-xl text-emerald-500"></i> LAPORAN WA
                     </button>
@@ -231,9 +232,9 @@
             </div>
         </aside>
 
-        <main class="flex-1 w-full max-w-[100vw] overflow-x-hidden bg-slate-50 flex flex-col relative md:overflow-hidden pb-0" x-show="currentView === 'home'" x-cloak>
+        <main class="flex-1 w-full max-w-[100vw] overflow-x-hidden bg-slate-50 flex flex-col relative md:overflow-hidden pb-0 min-h-0" x-show="currentView === 'home'" x-cloak>
             
-            <div class="bg-white sticky top-0 z-40 border-b border-slate-200 shadow-sm w-full">
+            <div class="bg-white sticky top-0 z-40 border-b border-slate-200 shadow-sm w-full shrink-0">
                 <div class="flex items-center gap-3 px-4 py-3 overflow-x-auto hide-scroll border-b border-slate-100 bg-slate-50/50">
                     <div class="flex items-center gap-3 pl-3 pr-5 py-2.5 bg-white border border-slate-200 rounded-2xl shrink-0 shadow-sm">
                         <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-xs text-amber-600"><i class="fas fa-box"></i></div>
@@ -268,7 +269,7 @@
                 </div>
             </div>
 
-            <div class="flex-1 w-full max-w-[100vw] overflow-y-auto bg-slate-50 hide-scroll pb-24 md:pb-6 px-1 md:px-6"> 
+            <div class="flex-1 w-full max-w-[100vw] overflow-y-visible md:overflow-y-auto bg-slate-50 custom-scrollbar pb-24 md:pb-6 px-1 md:px-6 min-h-0"> 
                 <table class="w-full text-left border-collapse md:min-w-[750px]">
                     <thead class="sticky top-0 z-30 bg-slate-100 shadow-sm border-b border-slate-200">
                         <tr>
@@ -341,7 +342,7 @@
             </div>
         </main>
 
-        <main class="flex-1 w-full max-w-[100vw] overflow-x-hidden bg-slate-50 flex flex-col px-4 pt-4 md:p-8 pb-24 md:pb-8 hide-scroll" x-show="currentView === 'dashboard'" x-cloak>
+        <main class="flex-1 w-full max-w-[100vw] overflow-y-visible md:overflow-y-auto bg-slate-50 flex flex-col px-4 pt-4 md:p-8 pb-24 md:pb-8 custom-scrollbar min-h-0" x-show="currentView === 'dashboard'" x-cloak>
             <div class="mb-5 flex justify-between items-end">
                 <div>
                     <h2 class="text-2xl font-extrabold text-slate-800 tracking-widest uppercase">Statistik <span class="gold-gradient">Sistem</span></h2>
