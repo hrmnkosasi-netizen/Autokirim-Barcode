@@ -51,7 +51,10 @@
         .light-input { background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b; outline: none; transition: border-color 0.2s; }
         .light-input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); background: #fff; }
         .custom-checkbox { border-radius: 6px; cursor: pointer; accent-color: #f59e0b; border: 1px solid #cbd5e1; }
-        input[type="date"], input[type="time"] { color-scheme: light; }
+        input[type="date"], input[type="time"], input[type="number"] { color-scheme: light; }
+        /* Hilangkan panah spinner bawaan input number */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
 
         .img-preview-container img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 10; border-radius: 0.75rem; }
         .img-preview-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 0; }
@@ -61,8 +64,6 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        canvas#sigCanvas { touch-action: none; }
     </style>
 </head>
 <body class="bg-mesh flex flex-col min-h-screen md:h-screen md:overflow-hidden" x-data="appData()" x-init="initApp()">
@@ -577,7 +578,7 @@
                             <button @click="tempItem.isCOD = false" class="text-[10px] font-bold px-4 py-1.5 rounded-md transition-all" :class="!tempItem.isCOD ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">NON</button>
                         </div>
                     </div>
-                    <input type="number" x-model="tempItem.price" class="w-full text-4xl font-extrabold text-center outline-none bg-transparent border-b-2 border-slate-200 text-slate-800 pb-2 focus:border-amber-500 transition-colors">
+                    <input type="number" x-model="tempItem.price" class="w-full text-4xl font-extrabold text-center outline-none bg-transparent border-b-2 border-slate-200 text-slate-800 pb-2 focus:border-amber-500 transition-colors" placeholder="0">
                 </div>
                 
                 <input type="text" x-model="tempItem.receiver" class="w-full p-4 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="Nama Penerima" id="receiverInput">
@@ -656,14 +657,6 @@
                         <i class="fas fa-check-circle text-5xl text-slate-200 mb-3"></i>
                         <span class="text-sm font-bold text-slate-500">Semua paket sesuai filter sudah diproses.</span>
                     </div>
-                </div>
-                
-                <div x-show="selectedManifestItems.length > 0" class="p-4 bg-white border-t border-slate-200 shrink-0 z-10 relative">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="text-[10px] font-extrabold text-slate-500 uppercase">Tanda Tangan Kurir / Supir</label>
-                        <button @click="clearSignature()" class="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-1 rounded border border-red-100"><i class="fas fa-eraser"></i> Hapus</button>
-                    </div>
-                    <canvas id="sigCanvas" width="400" height="150" class="w-full h-[120px] bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl cursor-crosshair shadow-inner"></canvas>
                 </div>
 
                 <div class="p-4 md:p-5 bg-white border-t border-slate-200 shrink-0 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 pb-safe">
@@ -808,7 +801,8 @@
                         document.documentElement.scrollTop = 0;
                     }, 0);
                     if (view === 'dashboard') {
-                        this.$nextTick(() => this.initCharts());
+                        // Retry logic agar chart jalan mesti elemennya di-render oleh Alpine terlebih dahulu
+                        setTimeout(() => this.initCharts(), 150);
                     }
                 },
 
@@ -860,7 +854,7 @@
                                 return (b.date || "") > (a.date || "") ? 1 : -1;
                             });
                             this.onlineData = tempData;
-                            if(this.currentView === 'dashboard') this.updateCharts();
+                            if(this.currentView === 'dashboard') setTimeout(() => this.updateCharts(), 150);
                             this.isLoading = false; 
                         }, (error) => {
                             console.error("Firebase DB Error: ", error); 
@@ -1036,6 +1030,8 @@
                     if(!this.tempItem.status) this.tempItem.status = 'Normal';
                     if(this.tempItem.marketplace.includes('(Pick Up)')) { this.tempItem.method = 'Pick Up'; this.tempItem.marketplace = this.tempItem.marketplace.replace(' (Pick Up)', ''); } else if(this.tempItem.marketplace.includes('(Drop Off)')) { this.tempItem.method = 'Drop Off'; this.tempItem.marketplace = this.tempItem.marketplace.replace(' (Drop Off)', ''); } 
                     if(!this.tempItem.method) this.tempItem.method = 'Pick Up';
+                    // Jika harga 0 jadikan kosong agar tidak mengganggu ketikan manual
+                    if(this.tempItem.price === 0) this.tempItem.price = '';
                     this.showDetailModal = true; 
                 },
 
@@ -1064,7 +1060,8 @@
                 executeScan(code) { 
                     this.triggerFeedback('success'); this.speakPaket(this.selectedCourier, code);
                     const dateStr = this.getJakartaDateISO(); const d = new Date(); const fullTime = d.toLocaleTimeString('id-ID', {hour12: false}); 
-                    const newItem = { code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: this.isCODInput, receiver: '', destination: '', weight: '', price: 0, time: fullTime, date: dateStr, admin: this.selectedUser, method: 'Pick Up', status: 'Normal', photoWeight: null, photoP: null, photoL: null, photoT: null }; 
+                    // Set price as empty string instead of 0
+                    const newItem = { code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: this.isCODInput, receiver: '', destination: '', weight: '', price: '', time: fullTime, date: dateStr, admin: this.selectedUser, method: 'Pick Up', status: 'Normal', photoWeight: null, photoP: null, photoL: null, photoT: null }; 
                     if(this.isBatchMode) { 
                         this.batchQueue.push(newItem); 
                         if(!this.isCameraActive) this.barcodeInput = ''; return; 
@@ -1128,40 +1125,11 @@
                     this.manifestTab = 'new'; 
                     this.showManifestManager = true; 
                     this.selectedManifestItems = []; 
-                    setTimeout(() => this.setupCanvas(), 300);
                 },
                 isPrinted(code) { return this.processedResis.includes(code); },
                 getPendingItems() { return this.onlineData.filter(i => { if (i.date !== this.manifestFilterDate) return false; if (this.manifestCourier !== 'ALL' && i.courier !== this.manifestCourier) return false; if (i.time < (this.manifestStartTime || '00:00')) return false; if (i.time > (this.manifestEndTime || '23:59')) return false; if (this.isPrinted(i.code)) return false; return true; }); },
                 toggleManifestItem(code) { if (this.selectedManifestItems.includes(code)) { this.selectedManifestItems = this.selectedManifestItems.filter(c => c !== code); } else { this.selectedManifestItems.push(code); } },
                 selectAllManifestItems() { const items = this.getPendingItems(); if (this.selectedManifestItems.length === items.length) { this.selectedManifestItems = []; } else { this.selectedManifestItems = items.map(i => i.code); } },
-                
-                setupCanvas() {
-                    const canvas = document.getElementById('sigCanvas');
-                    if(!canvas) return;
-                    const ctx = canvas.getContext('2d');
-                    ctx.lineWidth = 3;
-                    ctx.lineCap = 'round';
-                    ctx.strokeStyle = '#0f172a';
-                    let isDrawing = false;
-
-                    const getPos = (e) => {
-                        const rect = canvas.getBoundingClientRect();
-                        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                        return { x: clientX - rect.left, y: clientY - rect.top };
-                    };
-
-                    const start = (e) => { isDrawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); if(e.cancelable) e.preventDefault(); };
-                    const draw = (e) => { if(!isDrawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); if(e.cancelable) e.preventDefault(); };
-                    const stop = () => { isDrawing = false; ctx.closePath(); };
-
-                    canvas.onmousedown = start; canvas.onmousemove = draw; canvas.onmouseup = stop; canvas.onmouseout = stop;
-                    canvas.ontouchstart = start; canvas.ontouchmove = draw; canvas.ontouchend = stop;
-                },
-                clearSignature() {
-                    const canvas = document.getElementById('sigCanvas');
-                    if(canvas) { const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); }
-                },
 
                 async createManifest() { 
                     if (this.selectedManifestItems.length === 0) return; 
@@ -1173,27 +1141,20 @@
                         this.selectedManifestItems = []; return; 
                     } 
                     
-                    const canvas = document.getElementById('sigCanvas');
-                    const sigDataUrl = canvas ? canvas.toDataURL('image/png') : '';
-                    
-                    const isBlank = (ctx, c) => { const pixels = ctx.getImageData(0,0,c.width,c.height).data; return !pixels.some(channel => channel !== 0); };
-                    const finalSig = (canvas && !isBlank(canvas.getContext('2d'), canvas)) ? sigDataUrl : null;
-
                     const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code)); 
                     const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
-                    const historyEntry = { courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length, signature: finalSig }; 
+                    const historyEntry = { courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length }; 
                     
                     try { 
                         await window.fs.addDoc(window.fs.collection(window.db, "manifests"), historyEntry);
                         await this.logAction('MANIFEST', `Mencetak Surat Jalan (Manifest) untuk ${printTitle} berisi ${this.selectedManifestItems.length} resi paket.`);
                         this.selectedManifestItems = []; this.manifestTab = 'history'; this.pendingPrintData = itemsToPrint; this.pendingPrintTitle = printTitle; 
-                        this.pendingPrintSig = finalSig;
                         this.showPrintModal = true; 
                     } catch(e) { alert("Gagal menyimpan manifest. Sinyal tidak stabil."); } 
                     this.isLoading = false; 
                 },
-                execFinalPrint() { this.showPrintModal = false; this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle, this.pendingPrintSig); },
-                reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle, hist.signature); },
+                execFinalPrint() { this.showPrintModal = false; this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle); },
+                reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
                 async deleteManifest(hist) { 
                     if(!confirm('Hapus riwayat manifest ini? Data paket tetap aman.')) return; 
                     this.isLoading = true; 
@@ -1204,11 +1165,11 @@
                     this.isLoading = false; 
                 },
 
-                printManifestHTML(data, cn, sigBase64 = null) { 
+                printManifestHTML(data, cn) { 
                     if (data.length === 0) return alert("Data tidak ditemukan."); 
                     const tQ = data.length; const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); 
                     const w = window.open('', '_blank'); 
-                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:80px;}.sign-line{border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%; margin-top: auto;}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Admin / Sender</p><div class="sign-line" style="margin-top: 50px;">( Tanda Tangan )</div></div><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Kurir / Driver</p>${sigBase64 ? `<img src="${sigBase64}" style="max-width: 100%; height: 50px; object-fit: contain; margin-bottom: 5px;">` : `<div style="height: 50px;"></div>`}<div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`); 
+                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:100px;}.sign-line{border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%; margin-top: auto;}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div style="margin: 10px 0; border: 2px solid #b45309; color: #b45309; padding: 4px 12px; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-radius: 4px; display: inline-block; transform: rotate(-5deg);">AUTOKIRIM</div><div class="sign-line">( ${this.selectedUser} )</div></div><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Kurir / Driver</p><div style="height: 50px;"></div><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`); 
                     w.document.close(); 
                 },
                 printStruk(i) { 
@@ -1218,18 +1179,25 @@
                 },
                 
                 initCharts() { 
+                    const ctx1 = document.getElementById('courierChart'); 
+                    const ctx2 = document.getElementById('paymentChart');
+                    
+                    // Pastikan elemen canvas sudah terlihat sebelum mencoba menggambar grafik
+                    if (!ctx1 || !ctx2 || ctx1.clientHeight === 0) {
+                        setTimeout(() => this.initCharts(), 50);
+                        return;
+                    }
+
                     const s = this.getSummary(); 
                     if(window.courierChart) window.courierChart.destroy(); 
                     if(window.paymentChart) window.paymentChart.destroy(); 
                     
                     Chart.defaults.color = '#64748b'; 
                     
-                    const ctx1 = document.getElementById('courierChart'); 
-                    if(ctx1) { window.courierChart = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(s), datasets: [{ data: Object.values(s), backgroundColor: ['#f59e0b','#d97706','#fbbf24','#3b82f6','#10b981'], borderWidth: 2, borderColor: '#ffffff' }] }, options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#475569', font: {family: "'Plus Jakarta Sans', sans-serif", weight: 'bold'} } } } } }); } 
+                    window.courierChart = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(s), datasets: [{ data: Object.values(s), backgroundColor: ['#f59e0b','#d97706','#fbbf24','#3b82f6','#10b981'], borderWidth: 2, borderColor: '#ffffff' }] }, options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#475569', font: {family: "'Plus Jakarta Sans', sans-serif", weight: 'bold'} } } } } }); 
                     
                     const c = this.filteredData.filter(i=>i.isCOD).length; const n = this.filteredData.length - c; 
-                    const ctx2 = document.getElementById('paymentChart'); 
-                    if(ctx2) { window.paymentChart = new Chart(ctx2, { type: 'bar', data: { labels: ['COD','Non-COD'], datasets: [{ label: 'Total Paket', data: [c,n], backgroundColor: ['#10b981','#3b82f6'], borderRadius: 6 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#64748b', font: {weight: 'bold'}, stepSize: 1 }, grid: { color: '#f1f5f9' } }, x: { ticks: { color: '#64748b', font: {weight: 'bold'} }, grid: { display: false } } }, plugins: { legend: { display: false } } } }); } 
+                    window.paymentChart = new Chart(ctx2, { type: 'bar', data: { labels: ['COD','Non-COD'], datasets: [{ label: 'Total Paket', data: [c,n], backgroundColor: ['#10b981','#3b82f6'], borderRadius: 6 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#64748b', font: {weight: 'bold'}, stepSize: 1 }, grid: { color: '#f1f5f9' } }, x: { ticks: { color: '#64748b', font: {weight: 'bold'} }, grid: { display: false } } }, plugins: { legend: { display: false } } } }); 
                 },
                 updateCharts() { if(this.currentView === 'dashboard') this.initCharts(); }
             }
