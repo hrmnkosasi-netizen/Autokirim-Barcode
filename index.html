@@ -72,6 +72,7 @@
         <div class="flex flex-col items-center text-center p-8 bg-white rounded-3xl shadow-2xl border border-slate-100">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-amber-500 mb-4"></div>
             <p class="text-sm font-bold text-slate-700" x-text="loadingText"></p>
+            <p x-show="errorMessage" class="text-xs font-bold text-red-500 mt-2 bg-red-50 p-2 rounded-lg" x-text="errorMessage"></p>
         </div>
     </div>
 
@@ -337,7 +338,7 @@
                                 <div class="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300 border border-slate-200 shadow-inner">
                                     <i class="fas fa-folder-open text-3xl md:text-4xl"></i>
                                 </div>
-                                <span x-show="!searchQuery && onlineData.length > 0" class="font-medium">Tidak ada data di tanggal <b x-text="formatDateID(filterDate)" class="text-slate-700"></b> dengan filter tersebut.<br><button class="text-amber-600 bg-amber-50 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-amber-200 font-bold hover:bg-amber-100 mt-3 md:mt-4 transition-colors" @click="filterDate = ''; filterStatus = 'ALL'">TAMPILKAN SEMUA DATA</button></span>
+                                <span x-show="!searchQuery && onlineData.length > 0" class="font-medium">Tidak ada data di tanggal <b x-text="formatDateID(filterDate) || 'Semua Tanggal'" class="text-slate-700"></b> dengan filter tersebut.<br><button class="text-amber-600 bg-amber-50 px-3 md:px-4 py-1.5 md:py-2 rounded-lg border border-amber-200 font-bold hover:bg-amber-100 mt-3 md:mt-4 transition-colors" @click="filterDate = ''; filterStatus = 'ALL'">TAMPILKAN SEMUA DATA</button></span>
                                 <span x-show="!searchQuery && onlineData.length === 0" class="font-medium text-slate-400">Belum ada data.<br><span class="text-[10px] md:text-xs">Mulai scan paket sekarang!</span></span>
                                 <span x-show="searchQuery" class="font-bold text-slate-600">Resi tidak ditemukan.</span>
                             </td>
@@ -361,14 +362,17 @@
             <div class="mb-5 flex justify-between items-end">
                 <div>
                     <h2 class="text-2xl font-extrabold text-slate-800 tracking-widest uppercase">Statistik <span class="gold-gradient">Sistem</span></h2>
-                    <p class="text-sm text-slate-500 font-medium mt-1">Tanggal: <span class="text-amber-700 font-bold bg-amber-100 px-2.5 py-1 rounded-md border border-amber-200 ml-1" x-text="formatDateID(filterDate)"></span></p>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="date" x-model="filterDate" @change="initCharts()" class="light-input text-[11px] md:text-xs font-bold rounded-lg px-3 py-1.5 shadow-sm text-amber-700 bg-amber-50 border-amber-200 outline-none w-auto">
+                        <button type="button" @click="filterDate = ''; initCharts()" class="text-[10px] bg-white border border-slate-200 text-slate-500 px-3 py-2 rounded-lg font-bold hover:bg-slate-50 shadow-sm transition-colors">SEMUA TGL</button>
+                    </div>
                 </div>
                 <button type="button" @click="switchView('home')" class="text-xs font-bold text-slate-600 hover:text-amber-600 bg-white px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm flex items-center gap-2">Kembali <i class="fas fa-arrow-right"></i></button>
             </div>
             
             <div x-show="['Admin','Erika'].includes(selectedUser)" class="mb-6 bg-gradient-to-br from-amber-500 to-amber-600 p-6 rounded-3xl shadow-lg shadow-amber-500/20 text-white flex items-center justify-between border border-amber-400">
                 <div>
-                    <p class="text-xs font-bold text-amber-100 uppercase tracking-widest mb-1 shadow-sm">Estimasi Profit Hari Ini</p>
+                    <p class="text-xs font-bold text-amber-100 uppercase tracking-widest mb-1 shadow-sm">Estimasi Profit</p>
                     <h2 class="text-4xl font-extrabold drop-shadow-md" x-text="formatRupiah(totalProfit)"></h2>
                 </div>
                 <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner border border-white/30"><i class="fas fa-coins text-3xl text-white"></i></div>
@@ -485,7 +489,7 @@
     <div x-show="showDetailModal" class="fixed inset-0 bg-slate-900/60 z-[100] flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto" x-cloak>
         <div class="bg-white w-full md:max-w-md rounded-3xl shadow-2xl overflow-hidden modal-enter mt-4 mb-24 border border-slate-200 relative">
             <div class="bg-slate-50 border-b border-slate-200 p-5 flex justify-between items-center relative overflow-hidden">
-                <h3 class="font-extrabold flex items-center gap-2 relative z-10 text-lg text-slate-800"><i class="fas" :class="isEditMode ? 'fa-edit text-blue-500' : 'fa-cloud-upload-alt text-amber-500'"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Konfirmasi Paket'"></span></h3>
+                <h3 class="font-extrabold flex items-center gap-2 relative z-10 text-lg text-slate-800"><i class="fas" :class="isEditMode ? 'fa-edit text-blue-500' : 'fa-cloud-upload-alt text-amber-500'"></i> <span x-text="isEditMode ? 'Edit Paket'"></span></h3>
                 <button @click="printStruk(tempItem)" class="text-[10px] bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 relative z-10 shadow-sm flex items-center gap-1.5"><i class="fas fa-print text-amber-500"></i> STRUK</button>
             </div>
             <div class="p-6 space-y-5 bg-white">
@@ -756,7 +760,7 @@
             return {
                 isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
                 selectedUser: sessionStorage.getItem('autokirim_user') || '',
-                loginPass: '', isLoading: false, loadingText: 'Menghubungkan...',
+                loginPass: '', isLoading: false, loadingText: 'Menghubungkan...', errorMessage: '',
                 onlineData: [], showQrModal: false, selectedRows: [], barcodeInput: '',
                 isCameraActive: false, html5QrCode: null, showDetailModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
                 isCODInput: true, searchQuery: '', activeFilter: 'ALL', filterStatus: 'ALL', isEditMode: false, currentView: 'home',
@@ -801,8 +805,9 @@
                         document.documentElement.scrollTop = 0;
                     }, 0);
                     if (view === 'dashboard') {
-                        // Retry logic agar chart jalan mesti elemennya di-render oleh Alpine terlebih dahulu
-                        setTimeout(() => this.initCharts(), 150);
+                        this.$nextTick(() => {
+                            setTimeout(() => this.initCharts(), 100);
+                        });
                     }
                 },
 
@@ -810,7 +815,7 @@
                 
                 async doLogin() {
                     if(!this.selectedUser) return alert("Pilih user dulu!");
-                    this.isLoading = true;
+                    this.isLoading = true; this.errorMessage = '';
                     const fallbackCreds = { 'Admin': 'admin12', 'Erika': 'erika123' }; 
                     if(fallbackCreds[this.selectedUser] && fallbackCreds[this.selectedUser] === this.loginPass) { 
                         this.isLoggedIn = true; 
@@ -820,7 +825,8 @@
                         this.startManifestListener();
                         this.startLogListener();
                     } else { 
-                        alert("Password Salah!"); this.loginPass = ''; 
+                        this.errorMessage = "Password Salah!"; 
+                        this.loginPass = ''; 
                         this.isLoading = false;
                     }
                 },
@@ -837,31 +843,59 @@
                 },
 
                 startRealtimeListener() {
-                    this.isLoading = true; this.loadingText = 'Sinkronisasi Realtime...';
+                    this.isLoading = true; this.loadingText = 'Sinkronisasi Realtime...'; this.errorMessage = '';
                     try {
                         const q = window.fs.query(window.fs.collection(window.db, "scans"));
                         this.unsubscribeSnapshot = window.fs.onSnapshot(q, (querySnapshot) => {
                             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-                            let tempData = querySnapshot.docs.map(docSnap => {
-                                const item = docSnap.data();
-                                item.id = docSnap.id;
-                                if(!item.status) item.status = 'Normal'; 
-                                if(item.date) { const parts = item.date.split('-'); const d = new Date(parts[0], parts[1]-1, parts[2]); item.dayName = days[d.getDay()]; }
-                                return item;
+                            let tempData = [];
+                            
+                            querySnapshot.docs.forEach(docSnap => {
+                                try {
+                                    const item = docSnap.data();
+                                    item.id = docSnap.id;
+                                    if(!item.status) item.status = 'Normal'; 
+                                    
+                                    if (item.date && typeof item.date === 'string' && item.date.includes('-')) {
+                                        const parts = item.date.split('-');
+                                        const d = new Date(parts[0], parts[1]-1, parts[2]);
+                                        item.dayName = days[d.getDay()] || '-';
+                                    } else {
+                                        item.dayName = '-';
+                                        item.date = item.date ? String(item.date) : '-'; 
+                                    }
+                                    
+                                    item.code = item.code ? String(item.code) : '-';
+                                    item.receiver = item.receiver ? String(item.receiver) : '';
+                                    item.courier = item.courier ? String(item.courier) : 'Unknown';
+                                    item.time = item.time ? String(item.time) : '00:00';
+
+                                    tempData.push(item);
+                                } catch(e) {
+                                    console.warn("Skipping corrupt data row: ", docSnap.id);
+                                }
                             });
+                            
                             tempData.sort((a, b) => {
                                 if (a.date === b.date) { return (b.time || "") > (a.time || "") ? 1 : -1; }
                                 return (b.date || "") > (a.date || "") ? 1 : -1;
                             });
+                            
                             this.onlineData = tempData;
-                            if(this.currentView === 'dashboard') setTimeout(() => this.updateCharts(), 150);
+                            if(this.currentView === 'dashboard') {
+                                this.$nextTick(() => { setTimeout(() => this.updateCharts(), 100); });
+                            }
                             this.isLoading = false; 
                         }, (error) => {
                             console.error("Firebase DB Error: ", error); 
-                            alert("Gagal konek Firebase. Cek Rules Firestore Anda! Detail: " + error.message); 
+                            this.errorMessage = "Gagal konek Firebase: " + error.message; 
                             this.isLoading = false; 
                         });
-                    } catch (err) { console.error("Sistem Error: ", err); alert("Terjadi kesalahan: " + err.message); this.isLoading = false; }
+                    } catch (err) { 
+                        console.error("Sistem Error: ", err); 
+                        this.errorMessage = "Terjadi kesalahan: " + err.message; 
+                        this.isLoading = false; 
+                    }
                 },
 
                 startManifestListener() {
@@ -907,7 +941,7 @@
                     this.tempItem.admin = this.selectedUser;
                     const rate = this.commissionRates[this.tempItem.courier] || this.commissionRates['Default']; 
                     this.tempItem.profit = Math.round((parseInt(this.tempItem.price) || 0) * rate);
-                    this.tempItem.marketplace = this.tempItem.marketplace.replace(/ \((Pick Up|Drop Off)\)/gi, "");
+                    this.tempItem.marketplace = String(this.tempItem.marketplace).replace(/ \((Pick Up|Drop Off)\)/gi, "");
                     
                     try {
                         if(this.tempItem.photoBase64) { this.tempItem.photoUrl = this.tempItem.photoBase64; }
@@ -1028,9 +1062,8 @@
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.photoBase64 = item.photoUrl || null; 
                     if(!this.tempItem.status) this.tempItem.status = 'Normal';
-                    if(this.tempItem.marketplace.includes('(Pick Up)')) { this.tempItem.method = 'Pick Up'; this.tempItem.marketplace = this.tempItem.marketplace.replace(' (Pick Up)', ''); } else if(this.tempItem.marketplace.includes('(Drop Off)')) { this.tempItem.method = 'Drop Off'; this.tempItem.marketplace = this.tempItem.marketplace.replace(' (Drop Off)', ''); } 
+                    if(String(this.tempItem.marketplace).includes('(Pick Up)')) { this.tempItem.method = 'Pick Up'; this.tempItem.marketplace = String(this.tempItem.marketplace).replace(' (Pick Up)', ''); } else if(String(this.tempItem.marketplace).includes('(Drop Off)')) { this.tempItem.method = 'Drop Off'; this.tempItem.marketplace = String(this.tempItem.marketplace).replace(' (Drop Off)', ''); } 
                     if(!this.tempItem.method) this.tempItem.method = 'Pick Up';
-                    // Jika harga 0 jadikan kosong agar tidak mengganggu ketikan manual
                     if(this.tempItem.price === 0) this.tempItem.price = '';
                     this.showDetailModal = true; 
                 },
@@ -1060,7 +1093,6 @@
                 executeScan(code) { 
                     this.triggerFeedback('success'); this.speakPaket(this.selectedCourier, code);
                     const dateStr = this.getJakartaDateISO(); const d = new Date(); const fullTime = d.toLocaleTimeString('id-ID', {hour12: false}); 
-                    // Set price as empty string instead of 0
                     const newItem = { code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: this.isCODInput, receiver: '', destination: '', weight: '', price: '', time: fullTime, date: dateStr, admin: this.selectedUser, method: 'Pick Up', status: 'Normal', photoWeight: null, photoP: null, photoL: null, photoT: null }; 
                     if(this.isBatchMode) { 
                         this.batchQueue.push(newItem); 
@@ -1081,7 +1113,7 @@
                 get filteredData() { 
                     let data = this.onlineData; 
                     if (this.filterDate) data = data.filter(i => i.date === this.filterDate); 
-                    if (this.searchQuery) { const q = this.searchQuery.toLowerCase(); data = data.filter(i => String(i.code).toLowerCase().includes(q) || String(i.receiver).toLowerCase().includes(q)); } 
+                    if (this.searchQuery) { const q = String(this.searchQuery).toLowerCase(); data = data.filter(i => String(i.code).toLowerCase().includes(q) || String(i.receiver).toLowerCase().includes(q)); } 
                     if (this.activeFilter !== 'ALL') data = data.filter(i => i.courier === this.activeFilter); 
                     
                     if (this.filterStatus !== 'ALL') {
@@ -1102,8 +1134,13 @@
                 getCourierColor(c) { return 'border-amber-500'; }, 
                 getSummary() { const c={}; this.filteredData.forEach(i=>{c[i.courier]=(c[i.courier]||0)+1}); return c; },
                 getAdminStats() { const s={}; this.filteredData.forEach(i=>{const a=i.admin||'Unknown'; s[a]=(s[a]||0)+1;}); return s; },
-                formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num || 0); }, 
-                formatDateID(dateString) { if(!dateString) return '-'; const parts = dateString.split('-'); if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`; return dateString; },
+                formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(parseFloat(num) || 0); }, 
+                formatDateID(dateString) { 
+                    if(!dateString || typeof dateString !== 'string') return '-'; 
+                    const parts = dateString.split('-'); 
+                    if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`; 
+                    return dateString; 
+                },
                 toggleAll(e) { if (e.target.checked) { this.selectedRows = this.filteredData.map(item => item.code); } else { this.selectedRows = []; } },
                 openPhotoViewer(url) { if(url) { const img = new Image(); img.src = url; const w = window.open(""); w.document.write(img.outerHTML); } },
                 
@@ -1182,9 +1219,12 @@
                     const ctx1 = document.getElementById('courierChart'); 
                     const ctx2 = document.getElementById('paymentChart');
                     
-                    // Pastikan elemen canvas sudah terlihat sebelum mencoba menggambar grafik
-                    if (!ctx1 || !ctx2 || ctx1.clientHeight === 0) {
-                        setTimeout(() => this.initCharts(), 50);
+                    // REVISI TOTAL: Jika elemen belum siap, ulang lagi dalam 50ms (Jangan langsung dibatalkan)
+                    if (!ctx1 || !ctx2 || ctx1.clientHeight === 0 || ctx1.clientWidth === 0) {
+                        // Pastikan hanya looping saat sedang berada di tab dashboard
+                        if(this.currentView === 'dashboard') {
+                            setTimeout(() => this.initCharts(), 50);
+                        }
                         return;
                     }
 
