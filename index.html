@@ -64,6 +64,14 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Custom timeline CSS for tracking */
+        .tracking-timeline { position: relative; padding-left: 20px; margin-top: 10px; }
+        .tracking-timeline::before { content: ''; position: absolute; top: 0; bottom: 0; left: 6px; width: 2px; background: #e2e8f0; border-radius: 2px; }
+        .timeline-item { position: relative; padding-bottom: 15px; }
+        .timeline-item::before { content: ''; position: absolute; left: -20px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #cbd5e1; z-index: 2; }
+        .timeline-item:last-child { padding-bottom: 0; }
+        .timeline-item.active::before { border-color: #f59e0b; background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
     </style>
 </head>
 <body class="bg-mesh flex flex-col min-h-screen md:h-screen md:overflow-hidden" x-data="appData()" x-init="initApp()">
@@ -138,9 +146,9 @@
             <div class="flex-1 overflow-y-visible md:overflow-y-auto p-4 md:p-5 space-y-5 custom-scrollbar bg-slate-50/50 w-full min-h-0 pb-5">
                 
                 <div class="hidden md:flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 shrink-0">
-                    <button @click="switchView('home')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 bg-white text-amber-600 shadow-sm border border-slate-200"><i class="fas fa-list"></i> SCAN</button>
-                    <button @click="switchView('dashboard')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700"><i class="fas fa-chart-pie"></i> STATISTIK</button>
-                    <button @click="switchView('logs')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 text-slate-500 hover:text-slate-700"><i class="fas fa-history"></i> LOGS</button>
+                    <button @click="switchView('home')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2" :class="currentView === 'home' ? 'bg-white text-amber-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'"><i class="fas fa-list"></i> SCAN</button>
+                    <button @click="switchView('dashboard')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2" :class="currentView === 'dashboard' ? 'bg-white text-amber-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'"><i class="fas fa-chart-pie"></i> STATISTIK</button>
+                    <button @click="switchView('logs')" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2" :class="currentView === 'logs' ? 'bg-white text-amber-600 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'"><i class="fas fa-history"></i> LOGS</button>
                 </div>
 
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full shrink-0">
@@ -305,6 +313,9 @@
                                     <div class="flex flex-wrap gap-1 md:gap-2 items-center mb-2">
                                         <span class="text-[8px] md:text-[10px] font-extrabold text-slate-700 bg-slate-100 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md border border-slate-200 shadow-sm" x-text="item.courier"></span>
                                         <span class="text-[8px] md:text-[10px] font-extrabold text-white bg-amber-500 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-md shadow-sm" x-text="item.marketplace"></span>
+                                        <button @click.stop="openTrackModal(item)" class="text-[8px] md:text-[9px] px-1.5 md:px-2 py-0.5 rounded-md font-extrabold border bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 transition-colors flex items-center gap-1 shadow-sm">
+                                            <i class="fas fa-search-location"></i> LACAK
+                                        </button>
                                     </div>
                                     
                                     <div x-show="item.status && item.status !== 'Normal'">
@@ -404,11 +415,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
                     <h3 class="text-sm font-bold text-slate-800 mb-5 flex items-center gap-2"><div class="w-2 h-5 bg-amber-500 rounded-full"></div> Distribusi Ekspedisi</h3>
-                    <div class="relative h-64"><canvas id="courierChart"></canvas></div>
+                    <div id="chartContainer1" class="relative h-64 w-full"></div>
                 </div>
                 <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
                     <h3 class="text-sm font-bold text-slate-800 mb-5 flex items-center gap-2"><div class="w-2 h-5 bg-green-500 rounded-full"></div> Metode Pembayaran</h3>
-                    <div class="relative h-64"><canvas id="paymentChart"></canvas></div>
+                    <div id="chartContainer2" class="relative h-64 w-full"></div>
                 </div>
             </div>
             
@@ -489,7 +500,7 @@
     <div x-show="showDetailModal" class="fixed inset-0 bg-slate-900/60 z-[100] flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto" x-cloak>
         <div class="bg-white w-full md:max-w-md rounded-3xl shadow-2xl overflow-hidden modal-enter mt-4 mb-24 border border-slate-200 relative">
             <div class="bg-slate-50 border-b border-slate-200 p-5 flex justify-between items-center relative overflow-hidden">
-                <h3 class="font-extrabold flex items-center gap-2 relative z-10 text-lg text-slate-800"><i class="fas" :class="isEditMode ? 'fa-edit text-blue-500' : 'fa-cloud-upload-alt text-amber-500'"></i> <span x-text="isEditMode ? 'Edit Paket'"></span></h3>
+                <h3 class="font-extrabold flex items-center gap-2 relative z-10 text-lg text-slate-800"><i class="fas" :class="isEditMode ? 'fa-edit text-blue-500' : 'fa-cloud-upload-alt text-amber-500'"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Konfirmasi Paket'"></span></h3>
                 <button @click="printStruk(tempItem)" class="text-[10px] bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 relative z-10 shadow-sm flex items-center gap-1.5"><i class="fas fa-print text-amber-500"></i> STRUK</button>
             </div>
             <div class="p-6 space-y-5 bg-white">
@@ -594,6 +605,53 @@
                 <div class="flex gap-3 mt-8">
                     <button @click="showDetailModal = false" class="flex-1 py-4 rounded-xl font-bold text-slate-600 bg-white hover:bg-slate-50 border border-slate-300 transition-colors shadow-sm">Batal</button>
                     <button @click="saveData()" class="flex-[2] btn-gold py-4 rounded-xl font-bold uppercase shadow-lg text-sm" x-text="isEditMode ? 'Update Data' : 'Simpan Data'"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showTrackModal" class="fixed inset-0 bg-slate-900/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden relative border border-slate-200 max-h-[85vh]">
+            <div class="bg-blue-600 p-5 flex justify-between items-center text-white shrink-0 relative overflow-hidden">
+                <div class="absolute right-[-20px] top-[-20px] text-blue-500 opacity-30 text-8xl"><i class="fas fa-search-location"></i></div>
+                <div class="relative z-10">
+                    <h3 class="font-extrabold text-lg tracking-wider">LIVE TRACKING</h3>
+                    <p class="text-[10px] text-blue-200 font-medium">Cek Resi Otomatis API</p>
+                </div>
+                <button @click="showTrackModal = false" class="relative z-10 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-5 bg-slate-50">
+                <div x-show="trackLoading" class="flex flex-col items-center justify-center py-10 text-slate-400">
+                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-blue-500 mb-4"></div>
+                    <span class="text-xs font-bold animate-pulse">Menghubungi Server Ekspedisi...</span>
+                </div>
+
+                <div x-show="!trackLoading && trackError" class="text-center py-6">
+                    <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl"><i class="fas fa-exclamation-triangle"></i></div>
+                    <p class="text-xs font-bold text-slate-700 mb-2" x-text="trackError"></p>
+                </div>
+
+                <div x-show="!trackLoading && trackData">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 text-center">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1" x-text="trackData.summary?.courier || 'Kurir'"></span>
+                        <h4 class="text-xl font-extrabold text-slate-800 font-mono tracking-wider mb-2" x-text="trackData.summary?.awb || '-'"></h4>
+                        <div class="inline-block px-3 py-1 rounded-full text-xs font-bold border" 
+                             :class="trackData.summary?.status === 'DELIVERED' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200'" 
+                             x-text="trackData.summary?.status || 'PROSES'"></div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                        <h5 class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">Riwayat Perjalanan</h5>
+                        <div class="tracking-timeline">
+                            <template x-for="(hist, index) in trackData.history" :key="index">
+                                <div class="timeline-item" :class="index === 0 ? 'active' : ''">
+                                    <p class="text-[10px] font-bold text-slate-400 mb-0.5" x-text="hist.date"></p>
+                                    <p class="text-xs font-bold text-slate-700 leading-snug" x-text="hist.desc"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -758,6 +816,9 @@
 
         function appData() {
             return {
+                // ---- API KEY BINDERBYTE ANDA ----
+                binderbyteApiKey: 'ea031b26260cd75ce2d624572c7ddf47aec1303ac0b1d7286ebfdc77c217f2e9', 
+                
                 isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
                 selectedUser: sessionStorage.getItem('autokirim_user') || '',
                 loginPass: '', isLoading: false, loadingText: 'Menghubungkan...', errorMessage: '',
@@ -774,9 +835,10 @@
                 showManifestManager: false, manifestTab: 'new', manifestCourier: 'ALL', manifestFilterDate: new Date().toLocaleDateString('en-CA'), manifestStartTime: '00:00', manifestEndTime: '23:59', manifestHistory: [], processedResis: [], selectedManifestItems: [],
                 showPrintModal: false, pendingPrintData: [], pendingPrintTitle: '',
                 
-                logsData: [], unsubscribeLogs: null,
-
-                unsubscribeSnapshot: null, unsubscribeManifest: null,
+                logsData: [], unsubscribeLogs: null, unsubscribeSnapshot: null, unsubscribeManifest: null,
+                
+                // Variabel Live Tracking
+                showTrackModal: false, trackData: null, trackLoading: false, trackError: '',
 
                 initApp() { 
                     this.filterDate = this.getJakartaDateISO(); 
@@ -799,14 +861,16 @@
                 switchView(view) {
                     this.currentView = view;
                     this.showQrModal = false;
-                    setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: 'instant' });
-                        document.body.scrollTop = 0;
-                        document.documentElement.scrollTop = 0;
-                    }, 0);
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                    document.body.scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                    
                     if (view === 'dashboard') {
+                        // Tunda sejenak agar CSS/HTML selesai me-render layout sebelum menggambar canvas
                         this.$nextTick(() => {
-                            setTimeout(() => this.initCharts(), 100);
+                            setTimeout(() => {
+                                this.initCharts();
+                            }, 150);
                         });
                     }
                 },
@@ -883,7 +947,7 @@
                             
                             this.onlineData = tempData;
                             if(this.currentView === 'dashboard') {
-                                this.$nextTick(() => { setTimeout(() => this.updateCharts(), 100); });
+                                this.initCharts();
                             }
                             this.isLoading = false; 
                         }, (error) => {
@@ -1110,6 +1174,46 @@
 
                 triggerFeedback(type) { this.scanStatus = type; playBeep(type); setTimeout(() => this.scanStatus = 'idle', 800); },
                 
+                // ===== FUNGSI LIVE TRACKING API (FULL AKTIF) =====
+                openTrackModal(item) {
+                    this.showTrackModal = true;
+                    this.trackData = null;
+                    this.trackError = '';
+                    this.trackLoading = true;
+                    this.fetchTracking(item.code, item.courier);
+                },
+                async fetchTracking(code, courier) {
+                    // Mapping nama kurir lokal ke standar Binderbyte
+                    const cMap = {
+                        'J&T Express': 'jnt', 'J&T Cargo': 'jntcargo', 'JNE Express': 'jne',
+                        'ID Express': 'ide', 'Sicepat': 'sicepat', 'SPX': 'spx',
+                        'Lazada Lex': 'lex', 'Anteraja': 'anteraja', 'Ninja': 'ninja',
+                        'Lion Parcel (Reg Pack)': 'lion', 'Lion Parcel (Jago Pack)': 'lion',
+                        'SAPX': 'sap', 'Sentral Cargo': 'sentral', 'Paxel': 'paxel', 'POS Aja': 'pos'
+                    };
+                    const mappedCourier = cMap[courier] || '';
+
+                    if(!mappedCourier) {
+                        this.trackError = "Ekspedisi ini belum didukung untuk live tracking oleh API.";
+                        this.trackLoading = false; return;
+                    }
+
+                    // Eksekusi API Binderbyte Asli
+                    try {
+                        const res = await fetch(`https://api.binderbyte.com/v1/track?api_key=${this.binderbyteApiKey}&courier=${mappedCourier}&awb=${code}`);
+                        const json = await res.json();
+                        if(json.status === 200) {
+                            this.trackData = json.data;
+                        } else {
+                            this.trackError = json.message || "Gagal melacak resi / Nomor Resi tidak terdaftar.";
+                        }
+                    } catch(e) {
+                        this.trackError = "Terjadi gangguan koneksi ke server tracking pihak ketiga.";
+                    }
+                    this.trackLoading = false;
+                },
+                // ===================================
+                
                 get filteredData() { 
                     let data = this.onlineData; 
                     if (this.filterDate) data = data.filter(i => i.date === this.filterDate); 
@@ -1215,23 +1319,29 @@
                     w.document.write(html); w.document.close(); 
                 },
                 
+                // SISTEM "BRUTAL" UNTUK MEMAKSA GRAFIK MUNCUL
                 initCharts() { 
-                    const ctx1 = document.getElementById('courierChart'); 
-                    const ctx2 = document.getElementById('paymentChart');
-                    
-                    // REVISI TOTAL: Jika elemen belum siap, ulang lagi dalam 50ms (Jangan langsung dibatalkan)
-                    if (!ctx1 || !ctx2 || ctx1.clientHeight === 0 || ctx1.clientWidth === 0) {
-                        // Pastikan hanya looping saat sedang berada di tab dashboard
-                        if(this.currentView === 'dashboard') {
-                            setTimeout(() => this.initCharts(), 50);
-                        }
-                        return;
-                    }
+                    if (this.currentView !== 'dashboard') return;
 
-                    const s = this.getSummary(); 
+                    const c1 = document.getElementById('chartContainer1'); 
+                    const c2 = document.getElementById('chartContainer2');
+                    
+                    if (!c1 || !c2) return;
+
+                    // 1. Hancurkan instance chart yang lama
                     if(window.courierChart) window.courierChart.destroy(); 
                     if(window.paymentChart) window.paymentChart.destroy(); 
-                    
+
+                    // 2. Hancurkan dan buat ulang elemen HTML canvas dari nol
+                    c1.innerHTML = '<canvas id="courierChart"></canvas>';
+                    c2.innerHTML = '<canvas id="paymentChart"></canvas>';
+
+                    // 3. Ambil elemen canvas yang baru saja dibuat
+                    const ctx1 = document.getElementById('courierChart');
+                    const ctx2 = document.getElementById('paymentChart');
+
+                    // 4. Render grafik
+                    const s = this.getSummary(); 
                     Chart.defaults.color = '#64748b'; 
                     
                     window.courierChart = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(s), datasets: [{ data: Object.values(s), backgroundColor: ['#f59e0b','#d97706','#fbbf24','#3b82f6','#10b981'], borderWidth: 2, borderColor: '#ffffff' }] }, options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#475569', font: {family: "'Plus Jakarta Sans', sans-serif", weight: 'bold'} } } } } }); 
