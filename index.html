@@ -680,6 +680,7 @@
                     <div class="relative">
                         <select x-model="manifestCourier" class="w-full light-input text-xs font-bold rounded-xl p-3 appearance-none shadow-sm">
                             <option value="ALL">SEMUA EKSPEDISI</option>
+                            <option value="Normal">Normal / Terkirim</option>
                             <template x-for="c in couriers" :key="c"><option :value="c" x-text="c"></option></template>
                         </select>
                         <i class="fas fa-chevron-down absolute right-4 top-[14px] text-slate-400 pointer-events-none"></i>
@@ -1176,13 +1177,29 @@
                 
                 // ===== FUNGSI LIVE TRACKING API (FULL AKTIF) =====
                 openTrackModal(item) {
+                    let phoneStr = '';
+                    
+                    // Modifikasi Khusus JNE
+                    if (item.courier === 'JNE Express') {
+                        const phone = prompt("Sistem JNE memerlukan 5 digit nomor HP penerima untuk pelacakan.\n\nMasukkan 5 digit terakhir nomor HP penerima:");
+                        
+                        // Batalkan tracking jika user klik 'Cancel' atau membiarkan kosong
+                        if (phone === null || phone.trim() === '') {
+                            alert("Pelacakan dibatalkan. Nomor HP diperlukan khusus untuk resi JNE.");
+                            return; 
+                        }
+                        // Menambahkan parameter phone ke API
+                        phoneStr = `&phone=${phone.trim()}`;
+                    }
+                    
                     this.showTrackModal = true;
                     this.trackData = null;
                     this.trackError = '';
                     this.trackLoading = true;
-                    this.fetchTracking(item.code, item.courier);
+                    this.fetchTracking(item.code, item.courier, phoneStr);
                 },
-                async fetchTracking(code, courier) {
+                
+                async fetchTracking(code, courier, phoneStr = '') {
                     // Mapping nama kurir lokal ke standar Binderbyte
                     const cMap = {
                         'J&T Express': 'jnt', 'J&T Cargo': 'jntcargo', 'JNE Express': 'jne',
@@ -1198,9 +1215,9 @@
                         this.trackLoading = false; return;
                     }
 
-                    // Eksekusi API Binderbyte Asli
+                    // Eksekusi API Binderbyte Asli dengan Tambahan phoneStr (jika ada)
                     try {
-                        const res = await fetch(`https://api.binderbyte.com/v1/track?api_key=${this.binderbyteApiKey}&courier=${mappedCourier}&awb=${code}`);
+                        const res = await fetch(`https://api.binderbyte.com/v1/track?api_key=${this.binderbyteApiKey}&courier=${mappedCourier}&awb=${code}${phoneStr}`);
                         const json = await res.json();
                         if(json.status === 200) {
                             this.trackData = json.data;
