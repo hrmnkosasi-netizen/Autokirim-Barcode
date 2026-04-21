@@ -171,19 +171,22 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 w-full relative group shrink-0">
-                    <div id="reader" style="position: absolute; width: 300px; height: 300px; opacity: 0; pointer-events: none; left: -9999px;"></div>
-                    
-                    <div @click="$refs.scanFileInput.click()" class="w-full h-32 md:h-36 bg-slate-50 hover:bg-slate-100 rounded-xl border-2 border-dashed border-amber-400 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative overflow-hidden" :class="scanStatusClass">
-                        <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center mb-3 shadow-lg shadow-amber-500/30 text-white transform transition-transform group-hover:scale-110">
-                            <i class="fas fa-camera text-2xl"></i>
-                        </div>
-                        <span class="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest text-center">TAP PILIH FOTO / KAMERA</span>
-                    </div>
-                    
-                    <input type="file" x-ref="scanFileInput" accept="image/*" capture="environment" class="hidden" @change="processScanImage($event)"> </div>
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 w-full relative shrink-0 overflow-hidden">
+    <div id="reader" class="w-full rounded-xl overflow-hidden border-2 border-transparent" :class="scanStatusClass" x-show="isCameraActive"></div>
+    
+    <div x-show="!isCameraActive" @click="startLiveScanner()" class="w-full h-32 md:h-36 bg-slate-50 hover:bg-slate-100 rounded-xl border-2 border-dashed border-amber-400 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 relative group">
+        <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center mb-3 shadow-lg shadow-amber-500/30 text-white transform transition-transform group-hover:scale-110">
+            <i class="fas fa-video text-2xl"></i>
+        </div>
+        <span class="text-[11px] font-extrabold text-slate-600 uppercase tracking-widest text-center">TAP UTK MULAI LIVE SCANNER</span>
+    </div>
 
-                <div class="mt-2 flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm w-full shrink-0">
+    <button x-show="isCameraActive" @click="stopLiveScanner()" class="w-full mt-2 bg-red-50 hover:bg-red-100 text-red-500 py-2.5 rounded-xl font-bold text-[10px] border border-red-200 shadow-sm transition-all flex items-center justify-center gap-2">
+        <i class="fas fa-times-circle text-sm"></i> MATIKAN KAMERA
+    </button>
+</div>
+                    
+                      <div class="mt-2 flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm w-full shrink-0">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-bolt text-amber-500"></i>
                         <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wide">Scan Massal</span>
@@ -973,6 +976,7 @@
                 },
                 
                 switchView(view) {
+                    if (this.isCameraActive) this.stopLiveScanner(); // Matikan kamera jika pindah halaman
                     this.currentView = view;
                     this.showQrModal = false;
                     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1235,6 +1239,54 @@
                     setTimeout(() => { this.showDetailModal = true; setTimeout(() => document.getElementById('receiverInput')?.focus(), 100); this.barcodeInput = ''; }, 300); 
                 },
 
+startLiveScanner() {
+                    this.isCameraActive = true;
+                    this.isLoading = true;
+                    this.loadingText = "Membuka Kamera...";
+                    
+                    if (!this.html5QrCode) {
+                        this.html5QrCode = new Html5Qrcode("reader");
+                    }
+                    
+                    // Konfigurasi khusus untuk Barcode Resi (Bentuk Persegi Panjang)
+                    const config = { 
+                        fps: 10, 
+                        qrbox: { width: 280, height: 120 }, // Area fokus dibuat memanjang horizontal
+                        aspectRatio: 1.0
+                    };
+
+                    this.html5QrCode.start(
+                        { facingMode: "environment" }, // Memaksa pakai kamera belakang
+                        config,
+                        (decodedText) => {
+                            // Mencegah scan berulang saat modal detail sedang terbuka atau status masih success
+                            if (this.showDetailModal || this.scanStatus === 'success' || this.showWarningModal) return; 
+                            
+                            this.triggerFeedback('success');
+                            this.preProcessScan(decodedText);
+                        },
+                        (errorMessage) => {
+                            // Fungsi ini akan terus berjalan mencari barcode, error diabaikan saja
+                        }
+                    ).then(() => {
+                        this.isLoading = false;
+                    }).catch((err) => {
+                        this.isLoading = false;
+                        this.isCameraActive = false;
+                        alert("Gagal membuka kamera. Pastikan izin kamera browser sudah diberikan.");
+                    });
+                },
+
+                stopLiveScanner() {
+                    if (this.html5QrCode && this.isCameraActive) {
+                        this.html5QrCode.stop().then(() => {
+                            this.isCameraActive = false;
+                            this.html5QrCode.clear();
+                        }).catch((err) => {
+                            console.error("Gagal mematikan kamera", err);
+                        });
+                    }
+                },
                 speakPaket(courier, code) { 
                     if (!('speechSynthesis' in window)) return; let sayCourier = courier; const c = courier.toUpperCase(); 
                     if (c.includes('J&T CARGO')) { sayCourier = "Je En Te Kargo"; } else if (c.includes('J&T')) { sayCourier = "Je En Te"; } else if (c.includes('JNE')) { sayCourier = "Je En E"; } else if (c.includes('ID EXPRESS')) { sayCourier = "Ai Di Ekspres"; } else if (c.includes('SICEPAT')) { sayCourier = "Si Cepat"; } else if (c.includes('SPX')) { sayCourier = "Shopee"; } else if (c.includes('LAZADA') || c.includes('LEX')) { sayCourier = "Lazada"; } else if (c.includes('ANTERAJA')) { sayCourier = "Anter Aja"; } else if (c.includes('NINJA')) { sayCourier = "Ninja"; } else if (c.includes('LION')) { sayCourier = "Laion Parsel"; } else if (c.includes('SAPX') || c.includes('SAP')) { sayCourier = "Es A Pe"; } else if (c.includes('SENTRAL')) { sayCourier = "Sentral Kargo"; } else if (c.includes('PAXEL')) { sayCourier = "Paksel"; } else if (c.includes('POS')) { sayCourier = "Pos Aja"; } 
