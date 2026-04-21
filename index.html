@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Autokirim Teluk Gong 2</title>
+    <title>Autokirim Pro - Full Optimized</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -52,6 +52,7 @@
         .light-input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); background: #fff; }
         .custom-checkbox { border-radius: 6px; cursor: pointer; accent-color: #f59e0b; border: 1px solid #cbd5e1; }
         input[type="date"], input[type="time"], input[type="number"] { color-scheme: light; }
+        /* Hilangkan panah spinner bawaan input number */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
 
@@ -64,6 +65,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
+        /* Custom timeline CSS for tracking */
         .tracking-timeline { position: relative; padding-left: 20px; margin-top: 10px; }
         .tracking-timeline::before { content: ''; position: absolute; top: 0; bottom: 0; left: 6px; width: 2px; background: #e2e8f0; border-radius: 2px; }
         .timeline-item { position: relative; padding-bottom: 15px; }
@@ -89,7 +91,7 @@
                 <i class="fas fa-crown text-3xl"></i>
             </div>
             <h1 class="text-2xl font-extrabold text-slate-800 mb-1 tracking-wider">AUTOKIRIM <span class="gold-gradient">PRO</span></h1>
-            <p class="text-sm text-slate-500 mb-8 font-medium">CRM Portal</p>
+            <p class="text-sm text-slate-500 mb-8 font-medium">Internal Portal</p>
             <form @submit.prevent="doLogin">
                 <div class="mb-4 text-left relative">
                     <label class="text-[11px] font-bold text-slate-500 uppercase ml-1 mb-1 block tracking-wider">Pilih User</label>
@@ -150,6 +152,9 @@
                 </div>
 
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full shrink-0">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5"><i class="fas fa-sliders-h text-amber-500"></i> Konfigurasi</label>
+                    </div>
                     <div class="flex gap-2 overflow-x-auto hide-scroll mb-4 pb-1 cursor-grab" x-data="dragScroll()" @mousedown="start" @mouseleave="stop" @mouseup="stop" @mousemove="move">
                         <template x-for="mp in marketplaces" :key="mp.name">
                             <button @click="if(!isDragging) selectedMp = mp.name" class="whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 shrink-0 shadow-sm" :class="selectedMp === mp.name ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
@@ -217,20 +222,17 @@
                     <button @click="preProcessScan()" class="btn-gold px-6 rounded-xl shadow-md"><i class="fas fa-arrow-right text-white"></i></button>
                 </div>
 
-                <div class="pt-5 border-t border-slate-200 grid grid-cols-2 md:grid-cols-2 gap-3 w-full shrink-0">
+                <div class="pt-5 border-t border-slate-200 grid grid-cols-2 gap-3 w-full shrink-0">
                     <button @click="shareToWA()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-emerald-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
                         <i class="fab fa-whatsapp text-xl text-emerald-500"></i> LAPORAN WA
                     </button>
                     <button @click="openManifestManager()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-amber-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
                         <i class="fas fa-print text-xl text-amber-500"></i> MANIFEST
                     </button>
-                    <button @click="showReceiptManager = true" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-indigo-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
-                        <i class="fas fa-receipt text-xl text-indigo-500"></i> BUKTI TERIMA
-                    </button>
                     <button @click="exportExcel()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-blue-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
                         <i class="fas fa-file-excel text-xl text-blue-600"></i> EXCEL
                     </button>
-                    <button @click="showDeleteModal = true" class="col-span-2 bg-red-50 hover:bg-red-100 text-red-600 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-red-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
+                    <button @click="showDeleteModal = true" class="bg-red-50 hover:bg-red-100 text-red-600 py-3 md:py-4 rounded-xl font-bold text-[10px] md:text-xs border border-red-200 shadow-sm flex flex-col items-center justify-center gap-2 transition-all">
                         <i class="fas fa-trash-alt text-xl text-red-500"></i> HAPUS DATA
                     </button>
                 </div>
@@ -333,7 +335,6 @@
                                 <td class="p-2 md:p-4 align-top text-right border-b border-slate-100">
                                     <div class="flex flex-col items-end gap-1 md:gap-1.5 mb-1.5 md:mb-2">
                                         <div class="text-[11px] md:text-sm font-extrabold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 md:px-2.5 py-0.5 md:py-1 rounded-lg shadow-sm"><span x-text="formatRupiah(item.price)"></span></div>
-                                        <div x-show="item.insurance" class="text-[9px] md:text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-1.5 md:px-2.5 py-0.5 rounded-md mt-0.5 shadow-sm">Asr: <span x-text="formatRupiah(item.insurance)"></span></div>
                                         <div class="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-1.5 mt-1">
                                             <span x-show="item.weight" class="text-[9px] md:text-[10px] text-slate-600 font-bold bg-slate-100 border border-slate-200 px-1.5 md:px-2 py-0.5 rounded-md shadow-sm"><span x-text="item.weight"></span> Kg</span>
                                             <span class="text-[8px] md:text-[10px] uppercase font-extrabold px-1.5 md:px-2 py-0.5 rounded-md shadow-sm border" :class="item.isCOD ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200'" x-text="item.isCOD ? 'COD' : 'NON-COD'"></span>
@@ -358,15 +359,12 @@
             </div>
 
             <div x-show="selectedRows.length > 0" class="fixed bottom-[100px] md:bottom-6 left-4 right-4 md:left-[424px] z-50 modal-enter" x-cloak>
-                <div class="bg-slate-800 text-white p-3 md:p-4 rounded-2xl shadow-2xl flex flex-col md:flex-row justify-between items-center border border-slate-700 gap-3">
-                    <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto">
-                        <div class="bg-amber-500 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-extrabold text-xs md:text-sm text-white shadow-sm shrink-0" x-text="selectedRows.length"></div>
-                        <span class="font-bold text-xs md:text-sm whitespace-nowrap">Item Terpilih</span>
+                <div class="bg-slate-800 text-white p-3 md:p-4 rounded-2xl shadow-2xl flex justify-between items-center border border-slate-700">
+                    <div class="flex items-center gap-2 md:gap-3">
+                        <div class="bg-amber-500 w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-extrabold text-xs md:text-sm text-white shadow-sm" x-text="selectedRows.length"></div>
+                        <span class="font-bold text-xs md:text-sm">Item Terpilih</span>
                     </div>
-                    <div class="flex gap-2 w-full md:w-auto justify-end">
-                        <button @click="createBuktiTerima()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-[10px] md:text-xs shadow-lg transition-all flex items-center gap-1 md:gap-2 whitespace-nowrap"><i class="fas fa-receipt"></i> BUKTI TERIMA</button>
-                        <button @click="deleteSelected()" class="bg-red-500 hover:bg-red-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-[10px] md:text-xs shadow-lg transition-all flex items-center gap-1 md:gap-2 whitespace-nowrap"><i class="fas fa-trash-alt"></i> HAPUS</button>
-                    </div>
+                    <button @click="deleteSelected()" class="bg-red-500 hover:bg-red-600 text-white px-4 md:px-5 py-2 md:py-2.5 rounded-xl font-bold text-[10px] md:text-xs shadow-lg transition-all flex items-center gap-1 md:gap-2"><i class="fas fa-trash-alt"></i> HAPUS</button>
                 </div>
             </div>
         </main>
@@ -503,8 +501,8 @@
         <div class="bg-white w-full md:max-w-md rounded-3xl shadow-2xl overflow-hidden modal-enter mt-4 mb-24 border border-slate-200 relative">
             <div class="bg-slate-50 border-b border-slate-200 p-5 flex justify-between items-center relative overflow-hidden">
                 <h3 class="font-extrabold flex items-center gap-2 relative z-10 text-lg text-slate-800"><i class="fas" :class="isEditMode ? 'fa-edit text-blue-500' : 'fa-cloud-upload-alt text-amber-500'"></i> <span x-text="isEditMode ? 'Edit Paket' : 'Konfirmasi Paket'"></span></h3>
+                <button @click="printStruk(tempItem)" class="text-[10px] bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-bold hover:bg-slate-50 relative z-10 shadow-sm flex items-center gap-1.5"><i class="fas fa-print text-amber-500"></i> STRUK</button>
             </div>
-            
             <div class="p-6 space-y-5 bg-white">
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-center shadow-inner relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-1 h-full" :class="tempItem.status !== 'Normal' ? 'bg-red-500' : 'bg-amber-500'"></div>
@@ -551,6 +549,11 @@
                     </div>
                 </div>
 
+                <div class="flex justify-center gap-3">
+                    <button @click="tempItem.method = 'Pick Up'" class="flex-1 py-3 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Pick Up' ? 'bg-amber-100 text-amber-700 border-amber-300 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'">PICK UP</button>
+                    <button @click="tempItem.method = 'Drop Off'" class="flex-1 py-3 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Drop Off' ? 'bg-amber-100 text-amber-700 border-amber-300 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'">DROP OFF</button>
+                </div>
+                
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -582,68 +585,21 @@
                     </div>
                 </div>
 
-                <div class="flex justify-center gap-3">
-                    <button @click="tempItem.method = 'Pick Up'" class="flex-1 py-3 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Pick Up' ? 'bg-amber-100 text-amber-700 border-amber-300 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'">PICK UP</button>
-                    <button @click="tempItem.method = 'Drop Off'" class="flex-1 py-3 rounded-xl font-bold text-xs border transition-all" :class="tempItem.method === 'Drop Off' ? 'bg-amber-100 text-amber-700 border-amber-300 shadow-sm' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'">DROP OFF</button>
-                </div>
-                
-                <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 shadow-sm relative">
-                    <label class="text-[10px] font-extrabold text-amber-700 uppercase mb-2 block tracking-wide"><i class="fas fa-user-tag mr-1"></i> Data Pengirim</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="relative">
-                            <input type="text" x-model="tempItem.senderPhone" @focus="showSenderList = true" @click.outside="showSenderList = false" class="w-full p-3 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="No. Telp (Ketik utk cari..)">
-                            <div x-show="showSenderList && filteredSenders.length > 0" class="absolute z-[60] w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 max-h-40 overflow-y-auto custom-scrollbar">
-                                <template x-for="s in filteredSenders">
-                                    <div @click="selectSender(s)" class="p-3 text-xs font-bold hover:bg-amber-50 cursor-pointer border-b border-slate-100 flex justify-between items-center transition-colors">
-                                        <span x-text="s.phone" class="text-amber-600"></span><span x-text="s.name" class="text-slate-600 truncate ml-2"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                        <input type="text" x-model="tempItem.senderName" class="w-full p-3 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="Nama Pengirim">
-                    </div>
-                </div>
-
-                <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 shadow-sm relative">
-                    <label class="text-[10px] font-extrabold text-blue-700 uppercase mb-2 block tracking-wide"><i class="fas fa-user-check mr-1"></i> Data Penerima</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <div class="relative">
-                            <input type="text" x-model="tempItem.receiverPhone" @focus="showReceiverList = true" @click.outside="showReceiverList = false" class="w-full p-3 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="No. Telp (Ketik utk cari..)">
-                            <div x-show="showReceiverList && filteredReceivers.length > 0" class="absolute z-[60] w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 max-h-40 overflow-y-auto custom-scrollbar">
-                                <template x-for="r in filteredReceivers">
-                                    <div @click="selectReceiver(r)" class="p-3 text-xs font-bold hover:bg-blue-50 cursor-pointer border-b border-slate-100 flex justify-between items-center transition-colors">
-                                        <span x-text="r.phone" class="text-blue-600"></span><span x-text="r.name" class="text-slate-600 truncate ml-2"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                        <input type="text" x-model="tempItem.receiver" class="w-full p-3 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="Nama Penerima" id="receiverInput">
-                    </div>
-                    <div class="flex gap-3">
-                        <input type="text" x-model="tempItem.destination" class="w-full p-3 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="Kota Tujuan">
-                        <input type="text" x-model="tempItem.weight" class="w-24 p-3 text-sm light-input rounded-xl font-bold text-center shadow-sm" placeholder="Kg">
-                    </div>
-                </div>
-
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
-                        <label class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Rincian Biaya</label>
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Jenis & Ongkir</label>
                         <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
                             <button @click="tempItem.isCOD = true" class="text-[10px] font-bold px-4 py-1.5 rounded-md transition-all" :class="tempItem.isCOD ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">COD</button>
                             <button @click="tempItem.isCOD = false" class="text-[10px] font-bold px-4 py-1.5 rounded-md transition-all" :class="!tempItem.isCOD ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">NON</button>
                         </div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-inner">
-                            <label class="text-[9px] text-slate-400 font-extrabold uppercase mb-1 block">Ongkir (Rp)</label>
-                            <input type="number" x-model="tempItem.price" class="w-full text-xl md:text-2xl font-extrabold outline-none bg-transparent border-b-2 border-slate-300 text-slate-800 pb-1 focus:border-amber-500 transition-colors" placeholder="0">
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-inner">
-                            <label class="text-[9px] text-slate-400 font-extrabold uppercase mb-1 block">Asuransi (Rp)</label>
-                            <input type="number" x-model="tempItem.insurance" class="w-full text-xl md:text-2xl font-extrabold outline-none bg-transparent border-b-2 border-slate-300 text-slate-800 pb-1 focus:border-amber-500 transition-colors" placeholder="0">
-                        </div>
-                    </div>
+                    <input type="number" x-model="tempItem.price" class="w-full text-4xl font-extrabold text-center outline-none bg-transparent border-b-2 border-slate-200 text-slate-800 pb-2 focus:border-amber-500 transition-colors" placeholder="0">
+                </div>
+                
+                <input type="text" x-model="tempItem.receiver" class="w-full p-4 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="Nama Penerima" id="receiverInput">
+                <div class="flex gap-3">
+                    <input type="text" x-model="tempItem.destination" class="w-full p-4 text-sm light-input rounded-xl font-bold shadow-sm" placeholder="Kota Tujuan">
+                    <input type="text" x-model="tempItem.weight" class="w-24 p-4 text-sm light-input rounded-xl font-bold text-center shadow-sm" placeholder="Kg">
                 </div>
                 
                 <div class="flex gap-3 mt-8">
@@ -807,49 +763,6 @@
         </div>
     </div>
 
-    <div x-show="showReceiptManager" class="fixed inset-0 z-[100] flex md:items-center md:justify-center bg-slate-900/60 backdrop-blur-sm" x-cloak>
-        <div class="bg-white w-full h-[100dvh] md:h-[90vh] md:max-w-4xl md:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border border-slate-200">
-            <div class="bg-slate-50 p-4 md:p-5 border-b border-slate-200 flex justify-between items-center shrink-0">
-                <div class="flex items-center gap-3 md:gap-4">
-                    <div class="bg-white border border-slate-200 text-indigo-500 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-xl shadow-sm"><i class="fas fa-receipt text-lg"></i></div>
-                    <div>
-                        <h3 class="font-extrabold text-base md:text-lg text-slate-800 tracking-wide">Riwayat Bukti Terima</h3>
-                        <p class="text-[10px] md:text-[11px] text-slate-500 font-medium">Daftar resi terima kolektif yang pernah dibuat.</p>
-                    </div>
-                </div>
-                <button @click="showReceiptManager = false" class="text-slate-400 hover:text-slate-600 bg-white w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center shadow-sm"><i class="fas fa-times"></i></button>
-            </div>
-            
-            <div class="flex-1 overflow-hidden bg-slate-50 flex flex-col">
-                <div class="flex-1 overflow-y-auto p-4 md:p-5 space-y-4 hide-scroll">
-                    <div x-show="isLoading" class="text-center py-4 text-xs font-bold text-slate-500 animate-pulse">Memuat riwayat dari server...</div>
-                    <template x-for="hist in receiptHistory" :key="hist.id">
-                        <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                            <div class="flex justify-between items-start mb-3 border-b border-slate-100 pb-3">
-                                <div>
-                                    <div class="flex items-center gap-2 mb-1.5">
-                                        <span class="text-xs font-extrabold text-slate-800 uppercase" x-text="hist.senderName || 'Tanpa Nama'"></span>
-                                        <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-bold border border-indigo-200" x-text="(hist.items?.length || 0) + ' Pcs'"></span>
-                                    </div>
-                                    <p class="text-[11px] text-slate-500 font-medium flex items-center gap-1.5"><i class="far fa-calendar-alt"></i> <span x-text="new Date(hist.timestamp).toLocaleString('id-ID')"></span></p>
-                                    <p class="text-[10px] text-slate-400 mt-1"><i class="fas fa-phone mr-1"></i> <span x-text="hist.senderPhone || '-'"></span></p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button @click="printReceiptHTML(hist)" class="bg-white hover:bg-slate-50 text-indigo-600 px-3 py-2 rounded-lg text-[10px] font-bold border border-slate-200 transition-all shadow-sm"><i class="fas fa-print md:mr-1"></i> <span class="hidden md:inline">REPRINT</span></button>
-                                    <button @click="deleteReceipt(hist)" class="bg-white hover:bg-red-50 text-red-500 w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center transition-all shadow-sm"><i class="fas fa-trash-alt text-xs"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-                    <div x-show="!isLoading && receiptHistory.length === 0" class="text-center p-12 text-slate-400 text-xs font-medium">
-                        <i class="fas fa-receipt text-4xl mb-3 text-slate-300"></i><br>
-                        Belum ada riwayat bukti terima.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div x-show="showDeleteModal" class="fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak>
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-slate-200">
             <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 text-2xl border border-red-200"><i class="fas fa-exclamation-triangle"></i></div>
@@ -864,9 +777,9 @@
     <div x-show="showPrintModal" class="fixed inset-0 bg-slate-900/60 z-[120] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak>
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center border border-slate-200 relative">
             <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5 text-green-500 text-4xl border border-green-200 animate-bounce"><i class="fas fa-check"></i></div>
-            <h3 class="text-xl font-extrabold text-slate-800 mb-2">Data Disimpan!</h3>
-            <p class="text-xs text-slate-500 mb-6 font-medium">Silakan buka tab baru untuk mencetak.</p>
-            <button @click="execFinalPrint()" class="w-full btn-gold py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 text-sm transition-all transform hover:-translate-y-1"><i class="fas fa-print text-white text-lg"></i> PRINT SEKARANG</button>
+            <h3 class="text-xl font-extrabold text-slate-800 mb-2">Manifest Disimpan!</h3>
+            <p class="text-xs text-slate-500 mb-6 font-medium">Data aman di server. Silakan buka file cetak.</p>
+            <button @click="execFinalPrint()" class="w-full btn-gold py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 text-sm transition-all transform hover:-translate-y-1"><i class="fas fa-print text-white text-lg"></i> BUKA FILE MANIFEST</button>
             <button @click="showPrintModal = false" class="mt-5 text-xs font-bold text-slate-400 hover:text-slate-600">TUTUP / PRINT NANTI</button>
         </div>
     </div>
@@ -904,6 +817,7 @@
 
         function appData() {
             return {
+                // ---- API KEY BINDERBYTE ANDA ----
                 binderbyteApiKey: 'ea031b26260cd75ce2d624572c7ddf47aec1303ac0b1d7286ebfdc77c217f2e9', 
                 
                 isLoggedIn: sessionStorage.getItem('autokirim_session') === 'true',
@@ -920,44 +834,17 @@
                 commissionRates: { 'J&T Express': 0.25,'J&T Cargo': 0.25, 'JNE Express': 0.15, 'ID Express': 0.25, 'Sicepat': 0.20, 'SPX': 0.20, 'Paxel': 0.07, 'Lion Parcel (Reg Pack)': 0.15, 'Lion Parcel (Jago Pack)': 0.05, 'Ninja': 0.20, 'Pos Aja': 0.07, 'Anteraja': 0.30, 'Lazada Lex': 0.20, 'SAPX': 0.25, 'Default': 0.10 },
                 
                 showManifestManager: false, manifestTab: 'new', manifestCourier: 'ALL', manifestFilterDate: new Date().toLocaleDateString('en-CA'), manifestStartTime: '00:00', manifestEndTime: '23:59', manifestHistory: [], processedResis: [], selectedManifestItems: [],
-                showPrintModal: false, pendingPrintData: null, pendingPrintType: '', 
+                showPrintModal: false, pendingPrintData: [], pendingPrintTitle: '',
                 
-                logsData: [], unsubscribeLogs: null, unsubscribeSnapshot: null, unsubscribeManifest: null, unsubscribeReceipts: null,
+                logsData: [], unsubscribeLogs: null, unsubscribeSnapshot: null, unsubscribeManifest: null,
+                
+                // Variabel Live Tracking
                 showTrackModal: false, trackData: null, trackLoading: false, trackError: '',
-
-                showSenderList: false, showReceiverList: false,
-                
-                // Variabel Bukti Terima
-                showReceiptManager: false, receiptHistory: [],
-
-                get uniqueSenders() {
-                    const map = new Map();
-                    this.onlineData.forEach(i => { if (i.senderPhone && i.senderName) map.set(String(i.senderPhone).trim(), String(i.senderName).trim()); });
-                    return Array.from(map.entries()).map(([phone, name]) => ({phone, name}));
-                },
-                get uniqueReceivers() {
-                    const map = new Map();
-                    this.onlineData.forEach(i => { if (i.receiverPhone && i.receiver) map.set(String(i.receiverPhone).trim(), String(i.receiver).trim()); });
-                    return Array.from(map.entries()).map(([phone, name]) => ({phone, name}));
-                },
-
-                get filteredSenders() {
-                    if(!this.tempItem.senderPhone) return [];
-                    const q = String(this.tempItem.senderPhone).toLowerCase();
-                    return this.uniqueSenders.filter(s => s.phone.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
-                },
-                get filteredReceivers() {
-                    if(!this.tempItem.receiverPhone) return [];
-                    const q = String(this.tempItem.receiverPhone).toLowerCase();
-                    return this.uniqueReceivers.filter(r => r.phone.toLowerCase().includes(q) || r.name.toLowerCase().includes(q));
-                },
-
-                selectSender(s) { this.tempItem.senderPhone = s.phone; this.tempItem.senderName = s.name; this.showSenderList = false; },
-                selectReceiver(r) { this.tempItem.receiverPhone = r.phone; this.tempItem.receiver = r.name; this.showReceiverList = false; },
 
                 initApp() { 
                     this.filterDate = this.getJakartaDateISO(); 
                     this.manifestFilterDate = this.getJakartaDateISO();
+                    
                     if(this.isLoggedIn) { 
                         this.isLoading = true;
                         this.loadingText = "Menyiapkan Firebase...";
@@ -966,7 +853,6 @@
                                 clearInterval(checkFirebase);
                                 this.startRealtimeListener(); 
                                 this.startManifestListener();
-                                this.startReceiptListener();
                                 this.startLogListener();
                             }
                         }, 200); 
@@ -977,8 +863,17 @@
                     this.currentView = view;
                     this.showQrModal = false;
                     window.scrollTo({ top: 0, behavior: 'instant' });
-                    document.body.scrollTop = 0; document.documentElement.scrollTop = 0;
-                    if (view === 'dashboard') { this.$nextTick(() => { setTimeout(() => { this.initCharts(); }, 150); }); }
+                    document.body.scrollTop = 0;
+                    document.documentElement.scrollTop = 0;
+                    
+                    if (view === 'dashboard') {
+                        // Tunda sejenak agar CSS/HTML selesai me-render layout sebelum menggambar canvas
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.initCharts();
+                            }, 150);
+                        });
+                    }
                 },
 
                 getJakartaDateISO() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); },
@@ -988,18 +883,26 @@
                     this.isLoading = true; this.errorMessage = '';
                     const fallbackCreds = { 'Admin': 'admin12', 'Erika': 'erika123' }; 
                     if(fallbackCreds[this.selectedUser] && fallbackCreds[this.selectedUser] === this.loginPass) { 
-                        this.isLoggedIn = true; sessionStorage.setItem('autokirim_session', 'true'); sessionStorage.setItem('autokirim_user', this.selectedUser); 
-                        this.startRealtimeListener(); this.startManifestListener(); this.startReceiptListener(); this.startLogListener();
-                    } else { this.errorMessage = "Password Salah!"; this.loginPass = ''; this.isLoading = false; }
+                        this.isLoggedIn = true; 
+                        sessionStorage.setItem('autokirim_session', 'true'); 
+                        sessionStorage.setItem('autokirim_user', this.selectedUser); 
+                        this.startRealtimeListener(); 
+                        this.startManifestListener();
+                        this.startLogListener();
+                    } else { 
+                        this.errorMessage = "Password Salah!"; 
+                        this.loginPass = ''; 
+                        this.isLoading = false;
+                    }
                 },
                 
                 logout() { 
                     if(confirm('Keluar dari portal?')) { 
-                        this.isLoggedIn = false; sessionStorage.removeItem('autokirim_session'); this.selectedUser = ''; this.loginPass = ''; 
+                        this.isLoggedIn = false; sessionStorage.removeItem('autokirim_session'); 
+                        this.selectedUser = ''; this.loginPass = ''; 
                         if(this.isCameraActive && this.html5QrCode) this.html5QrCode.stop();
                         if(this.unsubscribeSnapshot) { this.unsubscribeSnapshot(); this.unsubscribeSnapshot = null; }
                         if(this.unsubscribeManifest) { this.unsubscribeManifest(); this.unsubscribeManifest = null; }
-                        if(this.unsubscribeReceipts) { this.unsubscribeReceipts(); this.unsubscribeReceipts = null; }
                         if(this.unsubscribeLogs) { this.unsubscribeLogs(); this.unsubscribeLogs = null; }
                     } 
                 },
@@ -1011,26 +914,53 @@
                         this.unsubscribeSnapshot = window.fs.onSnapshot(q, (querySnapshot) => {
                             const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                             let tempData = [];
+                            
                             querySnapshot.docs.forEach(docSnap => {
                                 try {
-                                    const item = docSnap.data(); item.id = docSnap.id;
+                                    const item = docSnap.data();
+                                    item.id = docSnap.id;
                                     if(!item.status) item.status = 'Normal'; 
+                                    
                                     if (item.date && typeof item.date === 'string' && item.date.includes('-')) {
-                                        const parts = item.date.split('-'); const d = new Date(parts[0], parts[1]-1, parts[2]); item.dayName = days[d.getDay()] || '-';
-                                    } else { item.dayName = '-'; item.date = item.date ? String(item.date) : '-'; }
+                                        const parts = item.date.split('-');
+                                        const d = new Date(parts[0], parts[1]-1, parts[2]);
+                                        item.dayName = days[d.getDay()] || '-';
+                                    } else {
+                                        item.dayName = '-';
+                                        item.date = item.date ? String(item.date) : '-'; 
+                                    }
+                                    
                                     item.code = item.code ? String(item.code) : '-';
                                     item.receiver = item.receiver ? String(item.receiver) : '';
                                     item.courier = item.courier ? String(item.courier) : 'Unknown';
                                     item.time = item.time ? String(item.time) : '00:00';
+
                                     tempData.push(item);
-                                } catch(e) { console.warn("Skipping corrupt data row: ", docSnap.id); }
+                                } catch(e) {
+                                    console.warn("Skipping corrupt data row: ", docSnap.id);
+                                }
                             });
-                            tempData.sort((a, b) => { if (a.date === b.date) { return (b.time || "") > (a.time || "") ? 1 : -1; } return (b.date || "") > (a.date || "") ? 1 : -1; });
+                            
+                            tempData.sort((a, b) => {
+                                if (a.date === b.date) { return (b.time || "") > (a.time || "") ? 1 : -1; }
+                                return (b.date || "") > (a.date || "") ? 1 : -1;
+                            });
+                            
                             this.onlineData = tempData;
-                            if(this.currentView === 'dashboard') { this.initCharts(); }
+                            if(this.currentView === 'dashboard') {
+                                this.initCharts();
+                            }
                             this.isLoading = false; 
-                        }, (error) => { console.error("Firebase DB Error: ", error); this.errorMessage = "Gagal konek Firebase: " + error.message; this.isLoading = false; });
-                    } catch (err) { console.error("Sistem Error: ", err); this.errorMessage = "Terjadi kesalahan: " + err.message; this.isLoading = false; }
+                        }, (error) => {
+                            console.error("Firebase DB Error: ", error); 
+                            this.errorMessage = "Gagal konek Firebase: " + error.message; 
+                            this.isLoading = false; 
+                        });
+                    } catch (err) { 
+                        console.error("Sistem Error: ", err); 
+                        this.errorMessage = "Terjadi kesalahan: " + err.message; 
+                        this.isLoading = false; 
+                    }
                 },
 
                 startManifestListener() {
@@ -1039,18 +969,10 @@
                         let tempHist = querySnapshot.docs.map(d => ({id: d.id, ...d.data()}));
                         tempHist.sort((a, b) => (b.timestamp > a.timestamp) ? 1 : -1);
                         this.manifestHistory = tempHist;
-                        let processed = []; this.manifestHistory.forEach(h => { processed = [...processed, ...(h.items || [])]; });
+                        let processed = [];
+                        this.manifestHistory.forEach(h => { processed = [...processed, ...(h.items || [])]; });
                         this.processedResis = processed;
                     }, (error) => { console.error("Manifest Error: ", error); });
-                },
-
-                startReceiptListener() {
-                    const q = window.fs.query(window.fs.collection(window.db, "receipts"));
-                    this.unsubscribeReceipts = window.fs.onSnapshot(q, (querySnapshot) => {
-                        let tempHist = querySnapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                        tempHist.sort((a, b) => (b.timestamp > a.timestamp) ? 1 : -1);
-                        this.receiptHistory = tempHist;
-                    }, (error) => { console.error("Receipts Error: ", error); });
                 },
 
                 startLogListener() {
@@ -1075,12 +997,12 @@
                     if(act === 'INPUT') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
                     if(act === 'UPDATE') return 'bg-blue-100 text-blue-700 border-blue-200';
                     if(act === 'DELETE') return 'bg-red-100 text-red-700 border-red-200';
-                    if(act === 'MANIFEST' || act === 'RECEIPT') return 'bg-amber-100 text-amber-700 border-amber-200';
+                    if(act === 'MANIFEST') return 'bg-amber-100 text-amber-700 border-amber-200';
                     return 'bg-slate-100 text-slate-700 border-slate-200';
                 },
 
                 async saveData() {
-                    this.showDetailModal = false; this.isLoading = true; this.loadingText = 'Menyimpan Data...';
+                    this.showDetailModal = false; this.isLoading = true; this.loadingText = 'Menyimpan ke Firestore...';
                     this.tempItem.admin = this.selectedUser;
                     const rate = this.commissionRates[this.tempItem.courier] || this.commissionRates['Default']; 
                     this.tempItem.profit = Math.round((parseInt(this.tempItem.price) || 0) * rate);
@@ -1095,7 +1017,7 @@
                         if (this.isEditMode && dataToSave.id) {
                             const docRef = window.fs.doc(window.db, "scans", dataToSave.id);
                             await window.fs.updateDoc(docRef, dataToSave);
-                            logDesc = `Update resi ${dataToSave.code} (${dataToSave.courier}). Ongkir: ${this.formatRupiah(dataToSave.price)}. Asuransi: ${this.formatRupiah(dataToSave.insurance)}.`;
+                            logDesc = `Update data resi ${dataToSave.code} (${dataToSave.courier}). Status baru: ${dataToSave.status}. Ongkir: ${this.formatRupiah(dataToSave.price)}.`;
                         } else {
                             await window.fs.addDoc(window.fs.collection(window.db, "scans"), dataToSave);
                             logDesc = `Input resi baru ${dataToSave.code} dari ${dataToSave.courier} (${dataToSave.marketplace}).`;
@@ -1127,9 +1049,17 @@
                     if (!confirm(type === 'all' ? "YAKIN HAPUS SELURUH DATABASE?" : `Hapus seluruh data tanggal ${this.formatDateID(dateTarget)}?`)) return; 
                     this.showDeleteModal = false; this.isLoading = true; this.loadingText = "Menghapus Batch..."; 
                     try {
-                        const batch = window.fs.writeBatch(window.db); let count = 0;
-                        this.onlineData.forEach(item => { if (type === 'all' || (type === 'today' && item.date === dateTarget)) { if(item.id) { batch.delete(window.fs.doc(window.db, "scans", item.id)); count++; } } });
-                        if(count > 0) { await batch.commit(); await this.logAction('DELETE', type === 'all' ? `RESET TOTAL: Menghapus seluruh database aplikasi (${count} resi).` : `Menghapus massal ${count} data pada tanggal ${this.formatDateID(dateTarget)}.`); }
+                        const batch = window.fs.writeBatch(window.db);
+                        let count = 0;
+                        this.onlineData.forEach(item => {
+                            if (type === 'all' || (type === 'today' && item.date === dateTarget)) {
+                                if(item.id) { batch.delete(window.fs.doc(window.db, "scans", item.id)); count++; }
+                            }
+                        });
+                        if(count > 0) {
+                            await batch.commit();
+                            await this.logAction('DELETE', type === 'all' ? `RESET TOTAL: Menghapus seluruh database aplikasi (${count} resi).` : `Menghapus massal ${count} data pada tanggal ${this.formatDateID(dateTarget)}.`);
+                        }
                         alert(`${count} data berhasil dihapus.`);
                     } catch (e) { alert("Error Batch Delete: " + e); } 
                     this.isLoading = false; 
@@ -1148,7 +1078,8 @@
                         });
                         await batch.commit();
                         await this.logAction('INPUT', `Input SCAN MASSAL sebanyak ${this.batchQueue.length} paket.`);
-                        alert(`${this.batchQueue.length} Paket berhasil disimpan!`); this.batchQueue = [];
+                        alert(`${this.batchQueue.length} Paket berhasil disimpan!`);
+                        this.batchQueue = [];
                     } catch (e) { console.error(e); alert("Gagal Batch Save"); } 
                     this.isLoading = false; 
                 },
@@ -1168,16 +1099,27 @@
                 },
 
                 processScanImage(event) {
-                    const file = event.target.files[0]; if (!file) return;
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
                     if (audioCtx.state === 'suspended') audioCtx.resume();
-                    this.isLoading = true; this.loadingText = "Mendeteksi Barcode...";
+                    this.isLoading = true;
+                    this.loadingText = "Mendeteksi Barcode...";
+                    
                     if(!this.html5QrCode) this.html5QrCode = new Html5Qrcode("reader");
                     
-                    this.html5QrCode.scanFile(file, true).then(decodedText => {
-                        this.isLoading = false; this.preProcessScan(decodedText); event.target.value = ''; 
-                    }).catch(err => {
-                        this.isLoading = false; this.triggerFeedback('error'); alert("Barcode tidak terbaca! Pastikan foto jelas dan terang."); event.target.value = '';
-                    });
+                    this.html5QrCode.scanFile(file, true)
+                        .then(decodedText => {
+                            this.isLoading = false;
+                            this.preProcessScan(decodedText);
+                            event.target.value = ''; 
+                        })
+                        .catch(err => {
+                            this.isLoading = false;
+                            this.triggerFeedback('error');
+                            alert("Barcode tidak terbaca! Pastikan foto jelas dan terang.");
+                            event.target.value = '';
+                        });
                 },
                 
                 openEditModal(item) { 
@@ -1185,10 +1127,6 @@
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.photoBase64 = item.photoUrl || null; 
                     if(!this.tempItem.status) this.tempItem.status = 'Normal';
-                    if(!this.tempItem.senderName) this.tempItem.senderName = '';
-                    if(!this.tempItem.senderPhone) this.tempItem.senderPhone = '';
-                    if(!this.tempItem.receiverPhone) this.tempItem.receiverPhone = '';
-                    if(!this.tempItem.insurance) this.tempItem.insurance = '';
                     if(String(this.tempItem.marketplace).includes('(Pick Up)')) { this.tempItem.method = 'Pick Up'; this.tempItem.marketplace = String(this.tempItem.marketplace).replace(' (Pick Up)', ''); } else if(String(this.tempItem.marketplace).includes('(Drop Off)')) { this.tempItem.method = 'Drop Off'; this.tempItem.marketplace = String(this.tempItem.marketplace).replace(' (Drop Off)', ''); } 
                     if(!this.tempItem.method) this.tempItem.method = 'Pick Up';
                     if(this.tempItem.price === 0) this.tempItem.price = '';
@@ -1206,7 +1144,8 @@
                 preProcessScan(codeFromCamera = null) { 
                     let code = codeFromCamera || this.barcodeInput.trim(); code = code.toUpperCase().replace(/\s+/g, ''); if(!code) return; 
                     if(this.onlineData.some(i => i.code === code) || this.batchQueue.some(i => i.code === code)) { 
-                        this.triggerFeedback('error'); alert('Resi SUDAH ADA!'); if(!codeFromCamera) this.barcodeInput=''; return; 
+                        this.triggerFeedback('error'); alert('Resi SUDAH ADA!'); 
+                        if(!codeFromCamera) this.barcodeInput=''; return; 
                     } 
                     if (!this.validateCourier(code, this.selectedCourier)) { 
                         this.triggerFeedback('error'); this.warningMessage = `Resi "${code}" sepertinya bukan milik ${this.selectedCourier}. Yakin ingin simpan?`; 
@@ -1219,13 +1158,11 @@
                 executeScan(code) { 
                     this.triggerFeedback('success'); this.speakPaket(this.selectedCourier, code);
                     const dateStr = this.getJakartaDateISO(); const d = new Date(); const fullTime = d.toLocaleTimeString('id-ID', {hour12: false}); 
-                    const newItem = { 
-                        code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: this.isCODInput, 
-                        senderName: '', senderPhone: '', receiver: '', receiverPhone: '', destination: '', weight: '', 
-                        price: '', insurance: '', time: fullTime, date: dateStr, admin: this.selectedUser, method: 'Pick Up', status: 'Normal', 
-                        photoWeight: null, photoP: null, photoL: null, photoT: null 
-                    }; 
-                    if(this.isBatchMode) { this.batchQueue.push(newItem); if(!this.isCameraActive) this.barcodeInput = ''; return; } 
+                    const newItem = { code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: this.isCODInput, receiver: '', destination: '', weight: '', price: '', time: fullTime, date: dateStr, admin: this.selectedUser, method: 'Pick Up', status: 'Normal', photoWeight: null, photoP: null, photoL: null, photoT: null }; 
+                    if(this.isBatchMode) { 
+                        this.batchQueue.push(newItem); 
+                        if(!this.isCameraActive) this.barcodeInput = ''; return; 
+                    } 
                     this.isEditMode = false; this.tempItem = newItem; 
                     setTimeout(() => { this.showDetailModal = true; setTimeout(() => document.getElementById('receiverInput')?.focus(), 100); this.barcodeInput = ''; }, 300); 
                 },
@@ -1236,35 +1173,79 @@
                     let sayCode = code.split('').join(' '); const msg = new SpeechSynthesisUtterance(); msg.text = `${sayCourier}, ${sayCode}`; msg.lang = 'id-ID'; msg.rate = 0.9; msg.pitch = 1.0; window.speechSynthesis.cancel(); window.speechSynthesis.speak(msg); 
                 },
 
+                triggerFeedback(type) { this.scanStatus = type; playBeep(type); setTimeout(() => this.scanStatus = 'idle', 800); },
+                
+                // ===== FUNGSI LIVE TRACKING API (FULL AKTIF) =====
                 openTrackModal(item) {
                     let phoneStr = '';
+                    
+                    // Modifikasi Khusus JNE
                     if (item.courier === 'JNE Express') {
                         const phone = prompt("Sistem JNE memerlukan 5 digit nomor HP penerima untuk pelacakan.\n\nMasukkan 5 digit terakhir nomor HP penerima:");
-                        if (phone === null || phone.trim() === '') { alert("Pelacakan dibatalkan."); return; }
+                        
+                        // Batalkan tracking jika user klik 'Cancel' atau membiarkan kosong
+                        if (phone === null || phone.trim() === '') {
+                            alert("Pelacakan dibatalkan. Nomor HP diperlukan khusus untuk resi JNE.");
+                            return; 
+                        }
+                        // Menambahkan parameter phone ke API
                         phoneStr = `&phone=${phone.trim()}`;
                     }
-                    this.showTrackModal = true; this.trackData = null; this.trackError = ''; this.trackLoading = true;
+                    
+                    this.showTrackModal = true;
+                    this.trackData = null;
+                    this.trackError = '';
+                    this.trackLoading = true;
                     this.fetchTracking(item.code, item.courier, phoneStr);
                 },
                 
                 async fetchTracking(code, courier, phoneStr = '') {
-                    const cMap = { 'J&T Express': 'jnt', 'J&T Cargo': 'jntcargo', 'JNE Express': 'jne', 'ID Express': 'ide', 'Sicepat': 'sicepat', 'SPX': 'spx', 'Lazada Lex': 'lex', 'Anteraja': 'anteraja', 'Ninja': 'ninja', 'Lion Parcel (Reg Pack)': 'lion', 'Lion Parcel (Jago Pack)': 'lion', 'SAPX': 'sap', 'Sentral Cargo': 'sentral', 'Paxel': 'paxel', 'POS Aja': 'pos' };
+                    // Mapping nama kurir lokal ke standar Binderbyte
+                    const cMap = {
+                        'J&T Express': 'jnt', 'J&T Cargo': 'jntcargo', 'JNE Express': 'jne',
+                        'ID Express': 'ide', 'Sicepat': 'sicepat', 'SPX': 'spx',
+                        'Lazada Lex': 'lex', 'Anteraja': 'anteraja', 'Ninja': 'ninja',
+                        'Lion Parcel (Reg Pack)': 'lion', 'Lion Parcel (Jago Pack)': 'lion',
+                        'SAPX': 'sap', 'Sentral Cargo': 'sentral', 'Paxel': 'paxel', 'POS Aja': 'pos'
+                    };
                     const mappedCourier = cMap[courier] || '';
-                    if(!mappedCourier) { this.trackError = "Ekspedisi ini belum didukung live tracking API."; this.trackLoading = false; return; }
+
+                    if(!mappedCourier) {
+                        this.trackError = "Ekspedisi ini belum didukung untuk live tracking oleh API.";
+                        this.trackLoading = false; return;
+                    }
+
+                    // Eksekusi API Binderbyte Asli dengan Tambahan phoneStr (jika ada)
                     try {
                         const res = await fetch(`https://api.binderbyte.com/v1/track?api_key=${this.binderbyteApiKey}&courier=${mappedCourier}&awb=${code}${phoneStr}`);
                         const json = await res.json();
-                        if(json.status === 200) { this.trackData = json.data; } else { this.trackError = json.message || "Gagal melacak resi."; }
-                    } catch(e) { this.trackError = "Terjadi gangguan koneksi ke server tracking."; }
+                        if(json.status === 200) {
+                            this.trackData = json.data;
+                        } else {
+                            this.trackError = json.message || "Gagal melacak resi / Nomor Resi tidak terdaftar.";
+                        }
+                    } catch(e) {
+                        this.trackError = "Terjadi gangguan koneksi ke server tracking pihak ketiga.";
+                    }
                     this.trackLoading = false;
                 },
+                // ===================================
                 
                 get filteredData() { 
                     let data = this.onlineData; 
                     if (this.filterDate) data = data.filter(i => i.date === this.filterDate); 
-                    if (this.searchQuery) { const q = String(this.searchQuery).toLowerCase(); data = data.filter(i => String(i.code).toLowerCase().includes(q) || String(i.receiver).toLowerCase().includes(q) || String(i.senderName).toLowerCase().includes(q) || String(i.senderPhone).toLowerCase().includes(q)); } 
+                    if (this.searchQuery) { const q = String(this.searchQuery).toLowerCase(); data = data.filter(i => String(i.code).toLowerCase().includes(q) || String(i.receiver).toLowerCase().includes(q)); } 
                     if (this.activeFilter !== 'ALL') data = data.filter(i => i.courier === this.activeFilter); 
-                    if (this.filterStatus !== 'ALL') { if (this.filterStatus === 'Normal') { data = data.filter(i => !i.status || i.status === 'Normal'); } else if (this.filterStatus === 'Bermasalah') { data = data.filter(i => i.status === 'Hilang' || i.status === 'Rusak'); } else { data = data.filter(i => i.status === this.filterStatus); } }
+                    
+                    if (this.filterStatus !== 'ALL') {
+                        if (this.filterStatus === 'Normal') {
+                            data = data.filter(i => !i.status || i.status === 'Normal');
+                        } else if (this.filterStatus === 'Bermasalah') {
+                            data = data.filter(i => i.status === 'Hilang' || i.status === 'Rusak');
+                        } else {
+                            data = data.filter(i => i.status === this.filterStatus);
+                        }
+                    }
                     return data; 
                 },
                 get totalCOD() { return this.filteredData.filter(i => i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
@@ -1275,14 +1256,19 @@
                 getSummary() { const c={}; this.filteredData.forEach(i=>{c[i.courier]=(c[i.courier]||0)+1}); return c; },
                 getAdminStats() { const s={}; this.filteredData.forEach(i=>{const a=i.admin||'Unknown'; s[a]=(s[a]||0)+1;}); return s; },
                 formatRupiah(num) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(parseFloat(num) || 0); }, 
-                formatDateID(dateString) { if(!dateString || typeof dateString !== 'string') return '-'; const parts = dateString.split('-'); if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`; return dateString; },
+                formatDateID(dateString) { 
+                    if(!dateString || typeof dateString !== 'string') return '-'; 
+                    const parts = dateString.split('-'); 
+                    if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`; 
+                    return dateString; 
+                },
                 toggleAll(e) { if (e.target.checked) { this.selectedRows = this.filteredData.map(item => item.code); } else { this.selectedRows = []; } },
                 openPhotoViewer(url) { if(url) { const img = new Image(); img.src = url; const w = window.open(""); w.document.write(img.outerHTML); } },
                 
                 exportExcel() { 
                     const d = this.filteredData; if(d.length===0) return alert("Kosong"); 
-                    let c="Tanggal,Hari,Jam,Ekspedisi,Resi,Penerima,Telp Penerima,Pengirim,Telp Pengirim,Tujuan,Tipe,Ongkir,Asuransi,Admin,Status_Paket,Foto\n"; 
-                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.receiverPhone||''}","${r.senderName||''}","${r.senderPhone||''}","${r.destination}",${r.isCOD?'COD':'NON'},${r.price},${r.insurance||0},${r.admin||''},${r.status||'Normal'},${r.photoUrl?'ADA_FOTO':''}\n`}); 
+                    let c="Tanggal,Hari,Jam,Ekspedisi,Resi,Penerima,Tujuan,Tipe,Nominal,Admin,Status_Paket,Foto\n"; 
+                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.destination}",${r.isCOD?'COD':'NON'},${r.price},${r.admin||''},${r.status||'Normal'},${r.photoUrl?'ADA_FOTO':''}\n`}); 
                     const l=document.createElement("a"); l.href="data:text/csv;charset=utf-8,"+encodeURI(c); l.download=`Laporan_${this.filterDate}.csv`; document.body.appendChild(l); l.click(); l.remove(); 
                 },
                 shareToWA() { 
@@ -1292,7 +1278,12 @@
                     window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,'_blank'); 
                 },
 
-                openManifestManager() { if (this.activeFilter !== 'ALL') this.manifestCourier = this.activeFilter; this.manifestTab = 'new'; this.showManifestManager = true; this.selectedManifestItems = []; },
+                openManifestManager() { 
+                    if (this.activeFilter !== 'ALL') this.manifestCourier = this.activeFilter; 
+                    this.manifestTab = 'new'; 
+                    this.showManifestManager = true; 
+                    this.selectedManifestItems = []; 
+                },
                 isPrinted(code) { return this.processedResis.includes(code); },
                 getPendingItems() { return this.onlineData.filter(i => { if (i.date !== this.manifestFilterDate) return false; if (this.manifestCourier !== 'ALL' && i.courier !== this.manifestCourier) return false; if (i.time < (this.manifestStartTime || '00:00')) return false; if (i.time > (this.manifestEndTime || '23:59')) return false; if (this.isPrinted(i.code)) return false; return true; }); },
                 toggleManifestItem(code) { if (this.selectedManifestItems.includes(code)) { this.selectedManifestItems = this.selectedManifestItems.filter(c => c !== code); } else { this.selectedManifestItems.push(code); } },
@@ -1301,220 +1292,72 @@
                 async createManifest() { 
                     if (this.selectedManifestItems.length === 0) return; 
                     this.isLoading = true; this.loadingText = "Menyimpan Manifest..."; 
+                    
                     const doubleResi = this.selectedManifestItems.filter(code => this.processedResis.includes(code)); 
-                    if (doubleResi.length > 0) { this.isLoading = false; alert(`PERINGATAN: Resi sudah diprint sebelumnya!\nResi: ${doubleResi.join(', ')}`); this.selectedManifestItems = []; return; } 
+                    if (doubleResi.length > 0) { 
+                        this.isLoading = false; alert(`PERINGATAN: Resi sudah diprint sebelumnya!\nResi: ${doubleResi.join(', ')}`); 
+                        this.selectedManifestItems = []; return; 
+                    } 
                     
                     const itemsToPrint = this.onlineData.filter(i => this.selectedManifestItems.includes(i.code)); 
                     const printTitle = this.manifestCourier === 'ALL' ? 'SEMUA EKSPEDISI' : this.manifestCourier; 
-                    const historyEntry = { courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length, admin: this.selectedUser }; 
+                    const historyEntry = { courier: this.manifestCourier, timestamp: new Date().toISOString(), items: this.selectedManifestItems, itemCount: this.selectedManifestItems.length }; 
                     
                     try { 
                         await window.fs.addDoc(window.fs.collection(window.db, "manifests"), historyEntry);
                         await this.logAction('MANIFEST', `Mencetak Surat Jalan (Manifest) untuk ${printTitle} berisi ${this.selectedManifestItems.length} resi paket.`);
-                        this.selectedManifestItems = []; this.manifestTab = 'history'; this.pendingPrintData = itemsToPrint; this.pendingPrintTitle = printTitle; this.pendingPrintType = 'manifest'; this.showPrintModal = true; 
-                    } catch(e) { alert("Gagal menyimpan manifest."); } 
+                        this.selectedManifestItems = []; this.manifestTab = 'history'; this.pendingPrintData = itemsToPrint; this.pendingPrintTitle = printTitle; 
+                        this.showPrintModal = true; 
+                    } catch(e) { alert("Gagal menyimpan manifest. Sinyal tidak stabil."); } 
                     this.isLoading = false; 
                 },
+                execFinalPrint() { this.showPrintModal = false; this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle); },
                 reprintManifest(hist) { const itemsToPrint = this.onlineData.filter(i => hist.items.includes(i.code)); const printTitle = hist.courier === 'ALL' ? 'SEMUA EKSPEDISI' : hist.courier; this.printManifestHTML(itemsToPrint, printTitle); },
                 async deleteManifest(hist) { 
                     if(!confirm('Hapus riwayat manifest ini? Data paket tetap aman.')) return; 
                     this.isLoading = true; 
-                    try { await window.fs.deleteDoc(window.fs.doc(window.db, "manifests", hist.id)); await this.logAction('DELETE', `Menghapus riwayat cetak manifest tanggal ${new Date(hist.timestamp).toLocaleString('id-ID')}.`); } catch(e) { alert('Error.'); } 
+                    try { 
+                        await window.fs.deleteDoc(window.fs.doc(window.db, "manifests", hist.id));
+                        await this.logAction('DELETE', `Menghapus riwayat cetak manifest tanggal ${new Date(hist.timestamp).toLocaleString('id-ID')}.`);
+                    } catch(e) { alert('Error koneksi delete.'); } 
                     this.isLoading = false; 
                 },
 
                 printManifestHTML(data, cn) { 
-                    if (!data || data.length === 0) return alert("Data tidak ditemukan."); 
+                    if (data.length === 0) return alert("Data tidak ditemukan."); 
                     const tQ = data.length; const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); 
                     const w = window.open('', '_blank'); 
-                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:100px;}.sign-line{border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%; margin-top: auto;}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}<br><span style="font-size:10px; color:#555">${item.receiverPhone || '-'}</span></td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div style="margin: 10px 0; border: 2px solid #b45309; color: #b45309; padding: 4px 12px; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-radius: 4px; display: inline-block; transform: rotate(-5deg);">AUTOKIRIM</div><div class="sign-line">( ${this.selectedUser} )</div></div><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Kurir / Driver</p><div style="height: 50px;"></div><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`); 
+                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:100px;}.sign-line{border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%; margin-top: auto;}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div><div class="pos-id">Pickup POS : AK00031858</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}</td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div style="margin: 10px 0; border: 2px solid #b45309; color: #b45309; padding: 4px 12px; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-radius: 4px; display: inline-block; transform: rotate(-5deg);">AUTOKIRIM</div><div class="sign-line">( ${this.selectedUser} )</div></div><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Kurir / Driver</p><div style="height: 50px;"></div><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`); 
                     w.document.close(); 
                 },
-
-                // --- BUKTI TERIMA KOLEKTIF DENGAN SIMPAN DATABASE ---
-                async createBuktiTerima() {
-                    if (this.selectedRows.length === 0) return;
-                    
-                    const items = this.onlineData.filter(i => this.selectedRows.includes(i.code));
-                    const defaultSenderName = items[0].senderName || "-";
-                    const defaultSenderPhone = items[0].senderPhone || "-";
-                    
-                    this.isLoading = true; this.loadingText = "Menyimpan Bukti Terima...";
-                    
-                    const receiptData = {
-                        senderName: defaultSenderName,
-                        senderPhone: defaultSenderPhone,
-                        items: items, 
-                        timestamp: new Date().toISOString(),
-                        admin: this.selectedUser
-                    };
-                    
-                    try {
-                        await window.fs.addDoc(window.fs.collection(window.db, "receipts"), receiptData);
-                        await this.logAction('RECEIPT', `Membuat Bukti Terima untuk Pengirim ${defaultSenderName} (${items.length} paket).`);
-                        
-                        this.selectedRows = []; 
-                        this.pendingPrintData = receiptData;
-                        this.pendingPrintType = 'receipt';
-                        this.showPrintModal = true;
-                    } catch(e) {
-                        alert("Gagal menyimpan Bukti Terima. Pastikan koneksi internet stabil.");
-                        console.error(e);
-                    }
-                    this.isLoading = false;
+                printStruk(i) { 
+                    const w = window.open('', '_blank', 'width=350,height=500'); const date = this.formatDateID(i.date); 
+                    const html = `<!DOCTYPE html><html><head><title>Struk-${i.code}</title><style>body{margin:0;padding:10px;font-family:'Courier New',monospace;font-size:12px;width:58mm;color:#000}.center{text-align:center}.bold{font-weight:bold}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between}.big{font-size:16px;font-weight:800}</style></head><body><div class="center bold">AUTOKIRIM PRO</div><div class="center" style="font-size:10px; margin-bottom:5px;">Teluk Gong 2</div><div class="line"></div><div class="center bold">BUKTI TANDA TERIMA</div><div class="center">${date} ${i.time}</div><div class="line"></div><div class="center big">${i.courier}</div><div class="center bold" style="margin:5px 0">${i.code}</div><div class="line"></div><div class="row"><span>Tipe:</span><span class="bold">${i.isCOD ? 'COD' : 'NON-COD'}</span></div><div class="row"><span>Ongkir:</span><span class="bold">${this.formatRupiah(i.price)}</span></div><div class="line"></div><div class="bold">Penerima:</div><div>${i.receiver || '-'}</div><div class="bold" style="margin-top:4px">Tujuan:</div><div>${i.destination || '-'}</div><div class="line"></div><div class="center" style="font-size:10px;">Simpan struk ini sebagai bukti.</div><script>setTimeout(function(){ window.print(); }, 1000);</sc`+`ript></body></html>`; 
+                    w.document.write(html); w.document.close(); 
                 },
-
-                execFinalPrint() { 
-                    this.showPrintModal = false; 
-                    if (this.pendingPrintType === 'manifest') {
-                        this.printManifestHTML(this.pendingPrintData, this.pendingPrintTitle); 
-                    } else if (this.pendingPrintType === 'receipt') {
-                        this.printReceiptHTML(this.pendingPrintData);
-                    }
-                },
-
-                printReceiptHTML(data) {
-                    if (!data || !data.items) return;
-                    
-                    const items = data.items;
-                    const dateObj = new Date(data.timestamp);
-                    const dateStr = dateObj.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-                    
-                    let totalOngkir = 0;
-                    let totalAsuransi = 0;
-
-                    let tbody = items.map((i, index) => {
-                        const ongkir = parseInt(i.price) || 0;
-                        const asuransi = parseInt(i.insurance) || 0;
-                        totalOngkir += ongkir;
-                        totalAsuransi += asuransi;
-                        
-                        return `<tr>
-                            <td style="text-align:center">${index + 1}</td>
-                            <td class="resi-col">${i.code}</td>
-                            <td>${i.receiver || '-'}<br><span style="font-size:10px; color:#555">${i.receiverPhone || '-'}</span></td>
-                            <td>${i.courier}<br><span style="font-size:10px; color:#555 font-weight:bold;">(${i.marketplace || 'Manual'})</span></td>
-                            <td style="text-align:center">${i.isCOD ? 'COD' : 'NON'}</td>
-                            <td style="text-align:right">${this.formatRupiah(ongkir)}</td>
-                            <td style="text-align:right">${this.formatRupiah(asuransi)}</td>
-                        </tr>`;
-                    }).join('');
-
-                    const html = `<html><head><title>Bukti Terima ${data.senderName || '-'}</title>
-                    <style>
-                        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:20px;font-size:12px;color:#333;width:100%;box-sizing:border-box}
-                        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;}
-                        .company-info { text-align: left; }
-                        .company-info h1 { margin: 0 0 5px 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-                        .company-info p { margin: 0; font-size: 11px; }
-                        .doc-title { text-align: right; }
-                        .doc-title h2 { margin: 0 0 5px 0; font-size: 20px; letter-spacing: 1px; color: #4f46e5; }
-                        .doc-title p { margin: 0; font-size: 11px; font-weight: bold; }
-                        .sender-info { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: inline-block; min-width: 300px; }
-                        .sender-info strong { display: inline-block; width: 80px; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; vertical-align: top; }
-                        th { background-color: #f1f5f9; text-transform: uppercase; font-size: 10px; font-weight: 800; color: #334155; }
-                        td { font-size: 11px; }
-                        .resi-col { font-size: 12px; font-weight: 900; font-family: monospace; }
-                        .totals { width: 300px; float: right; border: 1px solid #000; padding: 10px; border-radius: 8px; margin-bottom: 30px; }
-                        .totals .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; font-weight: bold; }
-                        .totals .row.grand { border-top: 1px solid #000; padding-top: 5px; font-size: 14px; color: #4f46e5; }
-                        .footer-sign { clear: both; display: flex; justify-content: space-between; margin-top: 40px; }
-                        .sign-box { text-align: center; width: 200px; }
-                        .sign-line { border-bottom: 1px solid #000; margin-top: 50px; margin-bottom: 5px; }
-                    </style>
-                    </head><body>
-                        <div class="header-container">
-                            <div class="company-info">
-                                <h1>AUTOKIRIM TELUK GONG 2</h1>
-                                <p>Jl. Teluk Gong Raya 3 RT.08/RW.10</p>
-                                <p>Telp: 085760035568</p>
-                            </div>
-                            <div class="doc-title">
-                                <h2>BUKTI TERIMA PAKET</h2>
-                                <p>Tgl Cetak: ${dateStr}</p>
-                                <p>Admin: ${data.admin || this.selectedUser}</p>
-                            </div>
-                        </div>
-
-                        <div class="sender-info">
-                            <div style="font-size: 10px; color: #64748b; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">Informasi Pengirim</div>
-                            <div><strong>Nama</strong> : ${data.senderName || '-'}</div>
-                            <div><strong>No. Telp</strong> : ${data.senderPhone || '-'}</div>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%; text-align:center;">No</th>
-                                    <th style="width: 20%">No. Resi</th>
-                                    <th style="width: 20%">Data Penerima</th>
-                                    <th style="width: 15%">Pengiriman</th>
-                                    <th style="width: 10%; text-align:center;">Tipe</th>
-                                    <th style="width: 15%; text-align:right;">Ongkir</th>
-                                    <th style="width: 15%; text-align:right;">Asuransi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tbody}
-                            </tbody>
-                        </table>
-
-                        <div class="totals">
-                            <div class="row"><span>Total Paket:</span><span>${items.length} Pcs</span></div>
-                            <div class="row"><span>Total Ongkir:</span><span>${this.formatRupiah(totalOngkir)}</span></div>
-                            <div class="row"><span>Total Asuransi:</span><span>${this.formatRupiah(totalAsuransi)}</span></div>
-                            <div class="row grand"><span>GRAND TOTAL:</span><span>${this.formatRupiah(totalOngkir + totalAsuransi)}</span></div>
-                        </div>
-
-                        <div class="footer-sign">
-                            <div class="sign-box">
-                                <div>Pihak Pengirim,</div>
-                                <div class="sign-line"></div>
-                                <div>${data.senderName || '-'}</div>
-                            </div>
-                            <div class="sign-box">
-                                <div>Petugas Autokirim,</div>
-                                <div class="sign-line"></div>
-                                <div>${data.admin || this.selectedUser}</div>
-                            </div>
-                        </div>
-                        <script>setTimeout(function(){ window.print(); }, 1000);<\/script>
-                    </body></html>`;
-
-                    const w = window.open('', '_blank');
-                    w.document.write(html);
-                    w.document.close();
-                },
-
-                async deleteReceipt(hist) { 
-                    if(!confirm('Hapus riwayat Bukti Terima ini? Data resi di sistem utama tetap aman.')) return; 
-                    this.isLoading = true; 
-                    try { 
-                        await window.fs.deleteDoc(window.fs.doc(window.db, "receipts", hist.id)); 
-                        await this.logAction('DELETE', `Menghapus riwayat Bukti Terima untuk ${hist.senderName} tanggal ${new Date(hist.timestamp).toLocaleString('id-ID')}.`); 
-                    } catch(e) { 
-                        alert('Error saat menghapus data.'); 
-                    } 
-                    this.isLoading = false; 
-                },
-
+                
+                // SISTEM "BRUTAL" UNTUK MEMAKSA GRAFIK MUNCUL
                 initCharts() { 
                     if (this.currentView !== 'dashboard') return;
+
                     const c1 = document.getElementById('chartContainer1'); 
                     const c2 = document.getElementById('chartContainer2');
+                    
                     if (!c1 || !c2) return;
 
+                    // 1. Hancurkan instance chart yang lama
                     if(window.courierChart) window.courierChart.destroy(); 
                     if(window.paymentChart) window.paymentChart.destroy(); 
 
+                    // 2. Hancurkan dan buat ulang elemen HTML canvas dari nol
                     c1.innerHTML = '<canvas id="courierChart"></canvas>';
                     c2.innerHTML = '<canvas id="paymentChart"></canvas>';
 
+                    // 3. Ambil elemen canvas yang baru saja dibuat
                     const ctx1 = document.getElementById('courierChart');
                     const ctx2 = document.getElementById('paymentChart');
 
+                    // 4. Render grafik
                     const s = this.getSummary(); 
                     Chart.defaults.color = '#64748b'; 
                     
@@ -1522,7 +1365,8 @@
                     
                     const c = this.filteredData.filter(i=>i.isCOD).length; const n = this.filteredData.length - c; 
                     window.paymentChart = new Chart(ctx2, { type: 'bar', data: { labels: ['COD','Non-COD'], datasets: [{ label: 'Total Paket', data: [c,n], backgroundColor: ['#10b981','#3b82f6'], borderRadius: 6 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#64748b', font: {weight: 'bold'}, stepSize: 1 }, grid: { color: '#f1f5f9' } }, x: { ticks: { color: '#64748b', font: {weight: 'bold'} }, grid: { display: false } } }, plugins: { legend: { display: false } } } }); 
-                }
+                },
+                updateCharts() { if(this.currentView === 'dashboard') this.initCharts(); }
             }
         }
     </script>
