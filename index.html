@@ -1437,7 +1437,7 @@ startLiveScanner() {
                     }
                 },
 
-               printReceiptHTML(data) {
+              printReceiptHTML(data) {
                     if (!data || !data.items) return;
                     
                     const items = data.items;
@@ -1447,14 +1447,28 @@ startLiveScanner() {
                     const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
                     const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                     
-                    let totalOngkir = 0;
-                    let totalAsuransi = 0;
+                    let totalNonCodOngkir = 0;
+                    let totalNonCodAsuransi = 0;
+                    let totalQtyNonCOD = 0;
+
+                    let totalCodOngkir = 0;
+                    let totalCodAsuransi = 0;
+                    let totalQtyCOD = 0;
 
                     let tbody = items.map((i, index) => {
                         const ongkir = parseInt(i.price) || 0;
                         const asuransi = parseInt(i.insurance) || 0;
-                        totalOngkir += ongkir;
-                        totalAsuransi += asuransi;
+                        
+                        // Pisahkan perhitungan COD dan Non-COD
+                        if (i.isCOD) {
+                            totalQtyCOD++;
+                            totalCodOngkir += ongkir;
+                            totalCodAsuransi += asuransi;
+                        } else {
+                            totalQtyNonCOD++;
+                            totalNonCodOngkir += ongkir;
+                            totalNonCodAsuransi += asuransi;
+                        }
                         
                         let cleanMarket = i.marketplace || ''; 
                         cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
@@ -1478,6 +1492,11 @@ startLiveScanner() {
                         </tr>`;
                     }).join('');
 
+                    // Kalkulasi Subtotal & Grand Total
+                    const subtotalNonCOD = totalNonCodOngkir + totalNonCodAsuransi;
+                    const subtotalCOD = totalCodOngkir + totalCodAsuransi;
+                    const grandTotal = subtotalNonCOD + subtotalCOD;
+
                     const html = `<!DOCTYPE html>
                     <html><head><title>Bukti Terima ${data.senderName || '-'}</title>
                     <style>
@@ -1485,20 +1504,15 @@ startLiveScanner() {
                         @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
                         
                         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 4mm; margin: 0; width: 4in; box-sizing: border-box; color: #000; font-size: 10px; line-height: 1.2; }
-                        
                         .wrapper { border: 2.5px solid #000; padding: 3mm; border-radius: 4px; display: flex; flex-direction: column; min-height: 144mm; box-sizing: border-box; }
                         
-        
                         .header-main { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px dashed #000; padding-bottom: 2mm; margin-bottom: 3mm; }
-                        
                         .header-left { width: 65%; text-align: left; }
                         .header-left h1 { margin: 0 0 2px 0; font-size: 13px; font-weight: 900; text-transform: uppercase; line-height: 1.1; }
                         .header-left p { margin: 0; font-size: 8.5px; font-weight: bold; color: #000; }
-
                         .header-right { width: 35%; text-align: right; }
                         .header-right h2 { margin: 0; font-size: 8px; font-weight: 900; border: 1.5px solid #000; display: inline-block; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
 
-                        /* Grid Info */
                         .info-grid { display: flex; justify-content: space-between; border: 1.5px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: 3mm; background: #fff; }
                         .info-col { width: 48%; }
                         .info-item { margin-bottom: 2px; }
@@ -1520,11 +1534,11 @@ startLiveScanner() {
                         .badge { display: inline-block; padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: 900; margin-top: 2px; color: #000; background: #fff; border: 1.5px solid #000; }
                         .badge-non { border-style: dashed; border-width: 1px; font-weight: normal; }
                         
-                        .totals-box { border: 1.5px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: auto; background: #fff; }
+                        .totals-box { border: 1.5px solid #000; border-radius: 4px; padding: 2mm; background: #fff; }
                         .row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 9px; font-weight: bold;}
                         .row.grand { border-top: 1px dashed #000; padding-top: 2px; margin-top: 2px; font-size: 11px; font-weight: 900; }
                         
-                        .signatures { display: flex; justify-content: space-between; margin-top: 5mm; text-align: center; }
+                        .signatures { display: flex; justify-content: space-between; margin-top: 5mm; text-align: center; margin-bottom: auto;}
                         .sign-box { width: 45%; }
                         .sign-title { font-size: 8px; font-weight: bold; margin-bottom: 2mm; }
                         .sign-space { height: 10mm; display: flex; align-items: center; justify-content: center; }
@@ -1571,11 +1585,28 @@ startLiveScanner() {
                                 </tbody>
                             </table>
 
-                            <div class="totals-box">
-                                <div class="row"><span>Total Qty:</span><span>${items.length} Pcs</span></div>
-                                <div class="row"><span>Total Ongkir:</span><span>${this.formatRupiah(totalOngkir)}</span></div>
-                                <div class="row"><span>Total Asuransi:</span><span>${this.formatRupiah(totalAsuransi)}</span></div>
-                                <div class="row grand"><span>GRAND TOTAL:</span><span>${this.formatRupiah(totalOngkir + totalAsuransi)}</span></div>
+                            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+                                <div class="totals-box" style="flex: 1;">
+                                    <div style="font-size:7px; font-weight:900; text-align:center; border-bottom:1px solid #000; margin-bottom:3px; padding-bottom:2px;">NON-COD (BAYAR SKRG)</div>
+                                    <div class="row"><span>Qty:</span><span>${totalQtyNonCOD} Pcs</span></div>
+                                    <div class="row"><span>Ongkir:</span><span>${this.formatRupiah(totalNonCodOngkir)}</span></div>
+                                    <div class="row"><span>Asuransi:</span><span>${this.formatRupiah(totalNonCodAsuransi)}</span></div>
+                                    <div class="row grand"><span>SUBTOTAL:</span><span>${this.formatRupiah(subtotalNonCOD)}</span></div>
+                                </div>
+                                <div class="totals-box" style="flex: 1;">
+                                    <div style="font-size:7px; font-weight:900; text-align:center; border-bottom:1px solid #000; margin-bottom:3px; padding-bottom:2px;">COD (BAYAR TUJUAN)</div>
+                                    <div class="row"><span>Qty:</span><span>${totalQtyCOD} Pcs</span></div>
+                                    <div class="row"><span>Ongkir:</span><span>${this.formatRupiah(totalCodOngkir)}</span></div>
+                                    <div class="row"><span>Asuransi:</span><span>${this.formatRupiah(totalCodAsuransi)}</span></div>
+                                    <div class="row grand"><span>SUBTOTAL:</span><span>${this.formatRupiah(subtotalCOD)}</span></div>
+                                </div>
+                            </div>
+                            
+                            <div class="totals-box" style="background-color: #f0f0f0;">
+                                <div class="row grand" style="justify-content: center; font-size: 11px; border:none; margin:0; padding:1px;">
+                                    <span style="margin-right: 15px;">TOTAL KESELURUHAN (${items.length} Pcs):</span>
+                                    <span>${this.formatRupiah(grandTotal)}</span>
+                                </div>
                             </div>
 
                             <div class="signatures">
