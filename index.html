@@ -1443,7 +1443,7 @@ startLiveScanner() {
                     const items = data.items;
                     const dateObj = new Date(data.timestamp);
                     
-                    // Format waktu header
+                    // Format waktu
                     const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
                     const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                     
@@ -1456,7 +1456,6 @@ startLiveScanner() {
                         totalOngkir += ongkir;
                         totalAsuransi += asuransi;
                         
-                        // Membersihkan text marketplace dari embel-embel Pick Up/Drop off
                         let cleanMarket = i.marketplace || ''; 
                         cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
                         
@@ -1474,7 +1473,7 @@ startLiveScanner() {
                             </td>
                             <td class="text-right">
                                 <div class="font-bold">${this.formatRupiah(ongkir)}</div>
-                                <div class="text-tiny text-gray" style="margin-top:2px;">Asr: ${this.formatRupiah(asuransi)}</div>
+                                <div class="text-tiny text-gray" style="margin-top:2px;">Asuransi :<br>${this.formatRupiah(asuransi)}</div>
                             </td>
                         </tr>`;
                     }).join('');
@@ -1482,74 +1481,79 @@ startLiveScanner() {
                     const html = `<!DOCTYPE html>
                     <html><head><title>Bukti Terima ${data.senderName || '-'}</title>
                     <style>
-                        /* Kertas Thermal 100x150mm & Paksa Print Warna Hitam */
                         @page { size: 4in 6in; margin: 0; }
-                        @media print {
-                            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-                        }
+                        @media print { * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
                         
-                        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 4mm; margin: 0; width: 4in; box-sizing: border-box; color: #000; font-size: 10px; line-height: 1.3; }
+                        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 4mm; margin: 0; width: 4in; box-sizing: border-box; color: #000; font-size: 10px; line-height: 1.2; }
                         
-                        .wrapper { border: 2px solid #000; padding: 3mm; border-radius: 6px; display: flex; flex-direction: column; min-height: 144mm; box-sizing: border-box; }
+                        .wrapper { border: 2.5px solid #000; padding: 3mm; border-radius: 4px; display: flex; flex-direction: column; min-height: 144mm; box-sizing: border-box; }
                         
-                        /* Header - Diubah dari Block Hitam menjadi Kotak Tepi Hitam Tebal */
-                        .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
-                        .header h1 { margin: 0; font-size: 14px; font-weight: 900; text-transform: uppercase; }
-                        .header h2 { margin: 4px auto 0 auto; font-size: 11px; font-weight: 900; color: #000; display: inline-block; padding: 2px 10px; border: 1.5px solid #000; border-radius: 6px; letter-spacing: 0.5px; }
+        
+                        .header-main { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px dashed #000; padding-bottom: 2mm; margin-bottom: 3mm; }
                         
-                        /* Info Grid */
-                        .info-grid { display: flex; justify-content: space-between; border: 1px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: 3mm; background: #fff; }
+                        .header-left { width: 65%; text-align: left; }
+                        .header-left h1 { margin: 0 0 2px 0; font-size: 13px; font-weight: 900; text-transform: uppercase; line-height: 1.1; }
+                        .header-left p { margin: 0; font-size: 8.5px; font-weight: bold; color: #000; }
+
+                        .header-right { width: 35%; text-align: right; }
+                        .header-right h2 { margin: 0; font-size: 8px; font-weight: 900; border: 1.5px solid #000; display: inline-block; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+
+                        /* Grid Info */
+                        .info-grid { display: flex; justify-content: space-between; border: 1.5px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: 3mm; background: #fff; }
                         .info-col { width: 48%; }
                         .info-item { margin-bottom: 2px; }
-                        .info-label { font-size: 7px; color: #222; text-transform: uppercase; font-weight: bold; display: block; }
-                        .info-value { font-size: 9px; font-weight: 900; }
-                        
-                        /* Tabel Item */
+                        .info-label { font-size: 7px; color: #000; text-transform: uppercase; font-weight: bold; display: block; }
+                        .info-value { font-size: 9px; font-weight: 900; color: #000;}
+
                         table { width: 100%; border-collapse: collapse; margin-bottom: 3mm; table-layout: fixed; }
                         th, td { border: 1px solid #000; padding: 1.5mm; text-align: left; vertical-align: top; }
-                        th { background-color: #f5f5f5; font-size: 8px; font-weight: bold; text-transform: uppercase; text-align: center; }
+                        th { background-color: #f0f0f0; font-size: 8px; font-weight: bold; text-transform: uppercase; text-align: center; }
                         td { font-size: 9px; word-wrap: break-word; }
                         
-                        /* Utilities Text */
                         .text-center { text-align: center; }
                         .text-right { text-align: right; }
                         .font-bold { font-weight: 900; font-size: 10px;}
                         .text-tiny { font-size: 7.5px; }
-                        .text-gray { color: #333; }
+                        .text-gray { color: #222; }
                         .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65px; display: inline-block;}
                         
-                        /* Label COD / NON-COD - Sekarang Semua Teks Hitam dengan Variasi Garis */
-                        .badge { display: inline-block; padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: 900; margin-top: 2px; color: #000; background: #fff; }
-                        .badge-cod { border: 1.5px solid #000; }
-                        .badge-non { border: 1px dashed #000; font-weight: normal; font-size: 7.5px; }
+                        .badge { display: inline-block; padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: 900; margin-top: 2px; color: #000; background: #fff; border: 1.5px solid #000; }
+                        .badge-non { border-style: dashed; border-width: 1px; font-weight: normal; }
                         
-                        /* Kotak Total */
                         .totals-box { border: 1.5px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: auto; background: #fff; }
                         .row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 9px; font-weight: bold;}
                         .row.grand { border-top: 1px dashed #000; padding-top: 2px; margin-top: 2px; font-size: 11px; font-weight: 900; }
                         
-                        /* Tanda Tangan */
                         .signatures { display: flex; justify-content: space-between; margin-top: 5mm; text-align: center; }
                         .sign-box { width: 45%; }
-                        .sign-title { font-size: 8px; font-weight: bold; margin-bottom: 12mm; }
+                        .sign-title { font-size: 8px; font-weight: bold; margin-bottom: 2mm; }
+                        .sign-space { height: 10mm; display: flex; align-items: center; justify-content: center; }
+                        .stamp { border: 1.5px solid #000; padding: 2px 6px; font-size: 9px; font-weight: 900; color: #000; transform: rotate(-8deg); letter-spacing: 0.5px; opacity: 0.8; border-radius: 2px; }
                         .sign-line { border-bottom: 1px solid #000; margin-bottom: 2px; }
                         .sign-name { font-size: 8px; font-weight: bold; text-transform: uppercase;}
                     </style>
                     </head><body>
                         <div class="wrapper">
-                            <div class="header">
-                                <h1>AUTOKIRIM TELUK GONG 2</h1>
-                                <h2>BUKTI TERIMA PAKET</h2>
+                            <div class="header-main">
+                                <div class="header-left">
+                                    <h1>AUTOKIRIM TELUK GONG 2</h1>
+                                    <p>Jl. Teluk Gong Raya 3 RT.08/RW.10</p>
+                                    <p>Pasar Teluk Gong 2 Uniko 10</p>
+                                    <p>wa: 085760035568</p>
+                                </div>
+                                <div class="header-right">
+                                    <h2>BUKTI TERIMA PAKET</h2>
+                                </div>
                             </div>
                             
                             <div class="info-grid">
                                 <div class="info-col">
-                                    <div class="info-item"><span class="info-label">Pengirim</span><span class="info-value">${data.senderName || '-'}</span></div>
+                                    <div class="info-item"><span class="info-label">Diterima Dari (Pengirim)</span><span class="info-value">${data.senderName || '-'}</span></div>
                                     <div class="info-item"><span class="info-label">No. Telp</span><span class="info-value">${data.senderPhone || '-'}</span></div>
                                 </div>
                                 <div class="info-col" style="text-align: right;">
-                                    <div class="info-item"><span class="info-label">Cetak</span><span class="info-value">${dateStr} - ${timeStr}</span></div>
-                                    <div class="info-item"><span class="info-label">Admin</span><span class="info-value">${data.admin || this.selectedUser}</span></div>
+                                    <div class="info-item"><span class="info-label">Waktu Cetak</span><span class="info-value">${dateStr} - ${timeStr} WIB</span></div>
+                                    <div class="info-item"><span class="info-label">Petugas Admin</span><span class="info-value">${data.admin || this.selectedUser}</span></div>
                                 </div>
                             </div>
 
@@ -1569,19 +1573,23 @@ startLiveScanner() {
 
                             <div class="totals-box">
                                 <div class="row"><span>Total Qty:</span><span>${items.length} Pcs</span></div>
-                                <div class="row"><span>Ongkir:</span><span>${this.formatRupiah(totalOngkir)}</span></div>
-                                <div class="row"><span>Asuransi:</span><span>${this.formatRupiah(totalAsuransi)}</span></div>
+                                <div class="row"><span>Total Ongkir:</span><span>${this.formatRupiah(totalOngkir)}</span></div>
+                                <div class="row"><span>Total Asuransi:</span><span>${this.formatRupiah(totalAsuransi)}</span></div>
                                 <div class="row grand"><span>GRAND TOTAL:</span><span>${this.formatRupiah(totalOngkir + totalAsuransi)}</span></div>
                             </div>
 
                             <div class="signatures">
                                 <div class="sign-box">
                                     <div class="sign-title">Pihak Pengirim</div>
+                                    <div class="sign-space"></div>
                                     <div class="sign-line"></div>
                                     <div class="sign-name">${data.senderName || '-'}</div>
                                 </div>
                                 <div class="sign-box">
-                                    <div class="sign-title">AUTOKIRIM</div>
+                                    <div class="sign-title">Petugas Sistem</div>
+                                    <div class="sign-space">
+                                        <div class="stamp">AUTOKIRIM</div>
+                                    </div>
                                     <div class="sign-line"></div>
                                     <div class="sign-name">${data.admin || this.selectedUser}</div>
                                 </div>
