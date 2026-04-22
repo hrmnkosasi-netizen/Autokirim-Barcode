@@ -1437,7 +1437,7 @@ startLiveScanner() {
                     }
                 },
 
-              printReceiptHTML(data) {
+               printReceiptHTML(data) {
                     if (!data || !data.items) return;
                     
                     const items = data.items;
@@ -1492,10 +1492,9 @@ startLiveScanner() {
                         </tr>`;
                     }).join('');
 
-                    // Kalkulasi Subtotal & Grand Total
+                    // Kalkulasi Subtotal
                     const subtotalNonCOD = totalNonCodOngkir + totalNonCodAsuransi;
                     const subtotalCOD = totalCodOngkir + totalCodAsuransi;
-                    const grandTotal = subtotalNonCOD + subtotalCOD;
 
                     const html = `<!DOCTYPE html>
                     <html><head><title>Bukti Terima ${data.senderName || '-'}</title>
@@ -1575,8 +1574,8 @@ startLiveScanner() {
                                 <thead>
                                     <tr>
                                         <th style="width: 8%;">No</th>
-                                        <th style="width: 44%;">Detail Paket</th>
-                                        <th style="width: 26%;">Penerima</th>
+                                        <th style="width: 42%;">Detail Paket</th>
+                                        <th style="width: 28%;">Penerima</th>
                                         <th style="width: 22%;">Biaya</th>
                                     </tr>
                                 </thead>
@@ -1599,13 +1598,6 @@ startLiveScanner() {
                                     <div class="row"><span>Ongkir:</span><span>${this.formatRupiah(totalCodOngkir)}</span></div>
                                     <div class="row"><span>Asuransi:</span><span>${this.formatRupiah(totalCodAsuransi)}</span></div>
                                     <div class="row grand"><span>SUBTOTAL:</span><span>${this.formatRupiah(subtotalCOD)}</span></div>
-                                </div>
-                            </div>
-                            
-                            <div class="totals-box" style="background-color: #f0f0f0;">
-                                <div class="row grand" style="justify-content: center; font-size: 11px; border:none; margin:0; padding:1px;">
-                                    <span style="margin-right: 15px;">TOTAL KESELURUHAN (${items.length} Pcs):</span>
-                                    <span>${this.formatRupiah(grandTotal)}</span>
                                 </div>
                             </div>
 
