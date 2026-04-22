@@ -1437,12 +1437,15 @@ startLiveScanner() {
                     }
                 },
 
-                printReceiptHTML(data) {
+               printReceiptHTML(data) {
                     if (!data || !data.items) return;
                     
                     const items = data.items;
                     const dateObj = new Date(data.timestamp);
-                    const dateStr = dateObj.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+                    
+                    // Format waktu header
+                    const dateStr = dateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                    const timeStr = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                     
                     let totalOngkir = 0;
                     let totalAsuransi = 0;
@@ -1453,95 +1456,135 @@ startLiveScanner() {
                         totalOngkir += ongkir;
                         totalAsuransi += asuransi;
                         
+                        // Membersihkan text marketplace dari embel-embel Pick Up/Drop off
+                        let cleanMarket = i.marketplace || ''; 
+                        cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
+                        
                         return `<tr>
-                            <td style="text-align:center">${index + 1}</td>
-                            <td class="resi-col">${i.code}</td>
-                            <td>${i.receiver || '-'}<br><span style="font-size:10px; color:#555">${i.receiverPhone || '-'}</span></td>
-                            <td>${i.courier}<br><span style="font-size:10px; color:#555 font-weight:bold;">(${i.marketplace || 'Manual'})</span></td>
-                            <td style="text-align:center">${i.isCOD ? 'COD' : 'NON'}</td>
-                            <td style="text-align:right">${this.formatRupiah(ongkir)}</td>
-                            <td style="text-align:right">${this.formatRupiah(asuransi)}</td>
+                            <td class="text-center">${index + 1}</td>
+                            <td>
+                                <div class="font-bold">${i.code}</div>
+                                <div class="text-tiny" style="margin-top:2px;"><b>${i.courier}</b> • ${cleanMarket} (${i.method || 'Pick Up'})</div>
+                                <div class="text-tiny text-gray" style="margin-top:2px;">🕒 ${this.formatDateID(i.date)} - ${i.time}</div>
+                            </td>
+                            <td>
+                                <div class="font-bold truncate">${i.receiver || '-'}</div>
+                                <div class="text-tiny">📞 ${i.receiverPhone || '-'}</div>
+                                <div class="badge ${i.isCOD ? 'badge-cod' : 'badge-non'}">${i.isCOD ? 'COD' : 'NON-COD'}</div>
+                            </td>
+                            <td class="text-right">
+                                <div class="font-bold">${this.formatRupiah(ongkir)}</div>
+                                <div class="text-tiny text-gray" style="margin-top:2px;">Asr: ${this.formatRupiah(asuransi)}</div>
+                            </td>
                         </tr>`;
                     }).join('');
 
-                    const html = `<html><head><title>Bukti Terima ${data.senderName || '-'}</title>
+                    const html = `<!DOCTYPE html>
+                    <html><head><title>Bukti Terima ${data.senderName || '-'}</title>
                     <style>
-                        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:20px;font-size:12px;color:#333;width:100%;box-sizing:border-box}
-                        .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;}
-                        .company-info { text-align: left; }
-                        .company-info h1 { margin: 0 0 5px 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-                        .company-info p { margin: 0; font-size: 11px; }
-                        .doc-title { text-align: right; }
-                        .doc-title h2 { margin: 0 0 5px 0; font-size: 20px; letter-spacing: 1px; color: #4f46e5; }
-                        .doc-title p { margin: 0; font-size: 11px; font-weight: bold; }
-                        .sender-info { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: inline-block; min-width: 300px; }
-                        .sender-info strong { display: inline-block; width: 80px; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; vertical-align: top; }
-                        th { background-color: #f1f5f9; text-transform: uppercase; font-size: 10px; font-weight: 800; color: #334155; }
-                        td { font-size: 11px; }
-                        .resi-col { font-size: 12px; font-weight: 900; font-family: monospace; }
-                        .totals { width: 300px; float: right; border: 1px solid #000; padding: 10px; border-radius: 8px; margin-bottom: 30px; }
-                        .totals .row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; font-weight: bold; }
-                        .totals .row.grand { border-top: 1px solid #000; padding-top: 5px; font-size: 14px; color: #4f46e5; }
-                        .footer-sign { clear: both; display: flex; justify-content: space-between; margin-top: 40px; }
-                        .sign-box { text-align: center; width: 200px; }
-                        .sign-line { border-bottom: 1px solid #000; margin-top: 50px; margin-bottom: 5px; }
+                        /* Kertas Thermal 100x150mm & Paksa Print Warna Hitam */
+                        @page { size: 4in 6in; margin: 0; }
+                        @media print {
+                            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        }
+                        
+                        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 4mm; margin: 0; width: 4in; box-sizing: border-box; color: #000; font-size: 10px; line-height: 1.3; }
+                        
+                        .wrapper { border: 2px solid #000; padding: 3mm; border-radius: 6px; display: flex; flex-direction: column; min-height: 144mm; box-sizing: border-box; }
+                        
+                        /* Header - Diubah dari Block Hitam menjadi Kotak Tepi Hitam Tebal */
+                        .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 3mm; margin-bottom: 3mm; }
+                        .header h1 { margin: 0; font-size: 14px; font-weight: 900; text-transform: uppercase; }
+                        .header h2 { margin: 4px auto 0 auto; font-size: 11px; font-weight: 900; color: #000; display: inline-block; padding: 2px 10px; border: 1.5px solid #000; border-radius: 6px; letter-spacing: 0.5px; }
+                        
+                        /* Info Grid */
+                        .info-grid { display: flex; justify-content: space-between; border: 1px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: 3mm; background: #fff; }
+                        .info-col { width: 48%; }
+                        .info-item { margin-bottom: 2px; }
+                        .info-label { font-size: 7px; color: #222; text-transform: uppercase; font-weight: bold; display: block; }
+                        .info-value { font-size: 9px; font-weight: 900; }
+                        
+                        /* Tabel Item */
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 3mm; table-layout: fixed; }
+                        th, td { border: 1px solid #000; padding: 1.5mm; text-align: left; vertical-align: top; }
+                        th { background-color: #f5f5f5; font-size: 8px; font-weight: bold; text-transform: uppercase; text-align: center; }
+                        td { font-size: 9px; word-wrap: break-word; }
+                        
+                        /* Utilities Text */
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        .font-bold { font-weight: 900; font-size: 10px;}
+                        .text-tiny { font-size: 7.5px; }
+                        .text-gray { color: #333; }
+                        .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65px; display: inline-block;}
+                        
+                        /* Label COD / NON-COD - Sekarang Semua Teks Hitam dengan Variasi Garis */
+                        .badge { display: inline-block; padding: 1px 4px; border-radius: 3px; font-size: 8px; font-weight: 900; margin-top: 2px; color: #000; background: #fff; }
+                        .badge-cod { border: 1.5px solid #000; }
+                        .badge-non { border: 1px dashed #000; font-weight: normal; font-size: 7.5px; }
+                        
+                        /* Kotak Total */
+                        .totals-box { border: 1.5px solid #000; border-radius: 4px; padding: 2mm; margin-bottom: auto; background: #fff; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 9px; font-weight: bold;}
+                        .row.grand { border-top: 1px dashed #000; padding-top: 2px; margin-top: 2px; font-size: 11px; font-weight: 900; }
+                        
+                        /* Tanda Tangan */
+                        .signatures { display: flex; justify-content: space-between; margin-top: 5mm; text-align: center; }
+                        .sign-box { width: 45%; }
+                        .sign-title { font-size: 8px; font-weight: bold; margin-bottom: 12mm; }
+                        .sign-line { border-bottom: 1px solid #000; margin-bottom: 2px; }
+                        .sign-name { font-size: 8px; font-weight: bold; text-transform: uppercase;}
                     </style>
                     </head><body>
-                        <div class="header-container">
-                            <div class="company-info">
+                        <div class="wrapper">
+                            <div class="header">
                                 <h1>AUTOKIRIM TELUK GONG 2</h1>
-                                <p>Jl. Teluk Gong Raya 3 RT.08/RW.10, Pasar Teluk Gong 2 Uniko 10</p>
-                                <p>Telp: 085760035568</p>
-                            </div>
-                            <div class="doc-title">
                                 <h2>BUKTI TERIMA PAKET</h2>
-                                <p>Tgl Cetak: ${dateStr}</p>
-                                <p>Admin: ${data.admin || this.selectedUser}</p>
                             </div>
-                        </div>
-
-                        <div class="sender-info">
-                            <div style="font-size: 10px; color: #64748b; margin-bottom: 5px; text-transform: uppercase; font-weight: bold;">Informasi Pengirim</div>
-                            <div><strong>Nama</strong> : ${data.senderName || '-'}</div>
-                            <div><strong>No. Telp</strong> : ${data.senderPhone || '-'}</div>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 5%; text-align:center;">No</th>
-                                    <th style="width: 20%">No. Resi</th>
-                                    <th style="width: 20%">Data Penerima</th>
-                                    <th style="width: 15%">Pengiriman</th>
-                                    <th style="width: 10%; text-align:center;">Tipe</th>
-                                    <th style="width: 15%; text-align:right;">Ongkir</th>
-                                    <th style="width: 15%; text-align:right;">Asuransi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${tbody}
-                            </tbody>
-                        </table>
-
-                        <div class="totals">
-                            <div class="row"><span>Total Paket:</span><span>${items.length} Pcs</span></div>
-                            <div class="row"><span>Total Ongkir:</span><span>${this.formatRupiah(totalOngkir)}</span></div>
-                            <div class="row"><span>Total Asuransi:</span><span>${this.formatRupiah(totalAsuransi)}</span></div>
-                            <div class="row grand"><span>GRAND TOTAL:</span><span>${this.formatRupiah(totalOngkir + totalAsuransi)}</span></div>
-                        </div>
-
-                        <div class="footer-sign">
-                            <div class="sign-box">
-                                <div>Pihak Pengirim,</div>
-                                <div class="sign-line"></div>
-                                <div>${data.senderName || '-'}</div>
+                            
+                            <div class="info-grid">
+                                <div class="info-col">
+                                    <div class="info-item"><span class="info-label">Pengirim</span><span class="info-value">${data.senderName || '-'}</span></div>
+                                    <div class="info-item"><span class="info-label">No. Telp</span><span class="info-value">${data.senderPhone || '-'}</span></div>
+                                </div>
+                                <div class="info-col" style="text-align: right;">
+                                    <div class="info-item"><span class="info-label">Cetak</span><span class="info-value">${dateStr} - ${timeStr}</span></div>
+                                    <div class="info-item"><span class="info-label">Admin</span><span class="info-value">${data.admin || this.selectedUser}</span></div>
+                                </div>
                             </div>
-                            <div class="sign-box">
-                                <div>Petugas Autokirim,</div>
-                                <div class="sign-line"></div>
-                                <div>${data.admin || this.selectedUser}</div>
+
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 8%;">No</th>
+                                        <th style="width: 44%;">Detail Paket</th>
+                                        <th style="width: 26%;">Penerima</th>
+                                        <th style="width: 22%;">Biaya</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tbody}
+                                </tbody>
+                            </table>
+
+                            <div class="totals-box">
+                                <div class="row"><span>Total Qty:</span><span>${items.length} Pcs</span></div>
+                                <div class="row"><span>Ongkir:</span><span>${this.formatRupiah(totalOngkir)}</span></div>
+                                <div class="row"><span>Asuransi:</span><span>${this.formatRupiah(totalAsuransi)}</span></div>
+                                <div class="row grand"><span>GRAND TOTAL:</span><span>${this.formatRupiah(totalOngkir + totalAsuransi)}</span></div>
+                            </div>
+
+                            <div class="signatures">
+                                <div class="sign-box">
+                                    <div class="sign-title">Pihak Pengirim</div>
+                                    <div class="sign-line"></div>
+                                    <div class="sign-name">${data.senderName || '-'}</div>
+                                </div>
+                                <div class="sign-box">
+                                    <div class="sign-title">AUTOKIRIM</div>
+                                    <div class="sign-line"></div>
+                                    <div class="sign-name">${data.admin || this.selectedUser}</div>
+                                </div>
                             </div>
                         </div>
                         <script>setTimeout(function(){ window.print(); }, 1000);<\/script>
