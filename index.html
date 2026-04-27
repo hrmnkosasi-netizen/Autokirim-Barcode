@@ -517,17 +517,44 @@
                     </div>
                 </div>
                 
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                    <label class="text-[10px] font-extrabold text-slate-500 uppercase mb-2 block">Status Paket</label>
-                    <div class="relative">
-                        <select x-model="tempItem.status" class="w-full light-input text-sm font-bold rounded-xl p-3 appearance-none cursor-pointer"
-                                :class="tempItem.status === 'Retur' ? 'text-orange-600 bg-orange-50 border-orange-200' : (tempItem.status !== 'Normal' ? 'text-red-600 bg-red-50 border-red-200' : 'text-slate-700')">
-                            <option value="Normal">Normal / Terkirim</option>
-                            <option value="Retur">Retur (Kembali ke Pengirim)</option>
-                            <option value="Hilang">Bermasalah: Hilang</option>
-                            <option value="Rusak">Bermasalah: Rusak</option>
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-[14px] text-slate-400 pointer-events-none"></i>
+               <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div>
+                        <label class="text-[10px] font-extrabold text-slate-500 uppercase mb-2 block">Status Paket</label>
+                        <div class="relative">
+                            <select x-model="tempItem.status" class="w-full light-input text-sm font-bold rounded-xl p-3 appearance-none cursor-pointer"
+                                    :class="tempItem.status === 'Retur' ? 'text-orange-600 bg-orange-50 border-orange-200' : (tempItem.status !== 'Normal' ? 'text-red-600 bg-red-50 border-red-200' : 'text-slate-700')">
+                                <option value="Normal">Normal / Terkirim</option>
+                                <option value="Retur">Retur (Kembali ke Pengirim)</option>
+                                <option value="Hilang">Bermasalah: Hilang</option>
+                                <option value="Rusak">Bermasalah: Rusak</option>
+                            </select>
+                            <i class="fas fa-chevron-down absolute right-4 top-[14px] text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase mb-2 block">Ekspedisi</label>
+                            <div class="relative">
+                                <select x-model="tempItem.courier" class="w-full light-input text-sm font-bold rounded-xl p-3 appearance-none cursor-pointer text-slate-700">
+                                    <template x-for="c in couriers" :key="c">
+                                        <option :value="c" x-text="c"></option>
+                                    </template>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-[14px] text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-extrabold text-slate-500 uppercase mb-2 block">Marketplace</label>
+                            <div class="relative">
+                                <select x-model="tempItem.marketplace" class="w-full light-input text-sm font-bold rounded-xl p-3 appearance-none cursor-pointer text-slate-700">
+                                    <template x-for="mp in marketplaces" :key="mp.name">
+                                        <option :value="mp.name" x-text="mp.name"></option>
+                                    </template>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-[14px] text-slate-400 pointer-events-none"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
