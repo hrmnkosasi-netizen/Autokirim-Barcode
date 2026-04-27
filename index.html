@@ -1351,33 +1351,13 @@ startLiveScanner() {
                 },
                 
                 get filteredData() { 
-    let data = this.onlineData; 
-    
-    // Jika sedang mencari resi, abaikan filter tanggal dan status agar pencarian akurat ke seluruh database
-    if (this.searchQuery) { 
-        const q = String(this.searchQuery).toLowerCase(); 
-        return data.filter(i => 
-            String(i.code).toLowerCase().includes(q) || 
-            String(i.receiver).toLowerCase().includes(q) || 
-            String(i.senderName).toLowerCase().includes(q) || 
-            String(i.senderPhone).toLowerCase().includes(q)
-        ); 
-    } 
-    
-    // Jika tidak mencari resi, gunakan filter normal
-    if (this.filterDate) data = data.filter(i => i.date === this.filterDate); 
-    if (this.activeFilter !== 'ALL') data = data.filter(i => i.courier === this.activeFilter); 
-    if (this.filterStatus !== 'ALL') { 
-        if (this.filterStatus === 'Normal') { 
-            data = data.filter(i => !i.status || i.status === 'Normal'); 
-        } else if (this.filterStatus === 'Bermasalah') { 
-            data = data.filter(i => i.status === 'Hilang' || i.status === 'Rusak'); 
-        } else { 
-            data = data.filter(i => i.status === this.filterStatus); 
-        } 
-    }
-    return data; 
-}
+                    let data = this.onlineData; 
+                    if (this.filterDate) data = data.filter(i => i.date === this.filterDate); 
+                    if (this.searchQuery) { const q = String(this.searchQuery).toLowerCase(); data = data.filter(i => String(i.code).toLowerCase().includes(q) || String(i.receiver).toLowerCase().includes(q) || String(i.senderName).toLowerCase().includes(q) || String(i.senderPhone).toLowerCase().includes(q)); } 
+                    if (this.activeFilter !== 'ALL') data = data.filter(i => i.courier === this.activeFilter); 
+                    if (this.filterStatus !== 'ALL') { if (this.filterStatus === 'Normal') { data = data.filter(i => !i.status || i.status === 'Normal'); } else if (this.filterStatus === 'Bermasalah') { data = data.filter(i => i.status === 'Hilang' || i.status === 'Rusak'); } else { data = data.filter(i => i.status === this.filterStatus); } }
+                    return data; 
+                },
                 get totalCOD() { return this.filteredData.filter(i => i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
                 get totalNonCOD() { return this.filteredData.filter(i => !i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
                 get totalProfit() { return this.filteredData.reduce((acc, curr) => acc + (parseInt(curr.profit) || 0), 0); }, 
