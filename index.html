@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script type="module">
-        // UPDATE: Menambahkan getDoc dan setDoc untuk fitur Kode Izin Hapus
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, doc, query, where, orderBy, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -153,15 +152,20 @@
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full shrink-0">
                     <div class="flex gap-2 overflow-x-auto hide-scroll mb-4 pb-1 cursor-grab" x-data="dragScroll()" @mousedown="start" @mouseleave="stop" @mouseup="stop" @mousemove="move">
                         <template x-for="mp in marketplaces" :key="mp.name">
-                            <button @click="if(!isDragging) selectedMp = mp.name" class="whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 shrink-0 shadow-sm" :class="selectedMp === mp.name ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
+                            <button @click="if(!isDragging) { selectedMp = mp.name; if(mp.name !== 'Manual') paymentTypeInput = 'Cashless'; else if(paymentTypeInput === 'Cashless') paymentTypeInput = 'Non COD'; }" class="whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 shrink-0 shadow-sm" :class="selectedMp === mp.name ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'">
                                 <i class="fas" :class="mp.icon" :style="selectedMp === mp.name ? 'color: #b45309' : 'color: #94a3b8'"></i> <span x-text="mp.name"></span>
                             </button>
                         </template>
                     </div>
                     <div class="space-y-4">
-                        <div class="bg-slate-100 p-1.5 rounded-xl flex border border-slate-200">
-                            <button @click="isCODInput = true" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all" :class="isCODInput ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">COD (Bayar)</button>
-                            <button @click="isCODInput = false" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all" :class="!isCODInput ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Non-COD</button>
+                        <div class="bg-slate-100 p-1.5 rounded-xl flex border border-slate-200 gap-1">
+                            <button x-show="selectedMp !== 'Manual'" class="w-full py-2.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm cursor-default">CASHLESS</button>
+                            <template x-if="selectedMp === 'Manual'">
+                                <div class="flex w-full gap-1">
+                                    <button @click="paymentTypeInput = 'COD'" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all" :class="paymentTypeInput === 'COD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">COD (Bayar)</button>
+                                    <button @click="paymentTypeInput = 'Non COD'" class="flex-1 py-2.5 rounded-lg text-xs font-bold transition-all" :class="paymentTypeInput === 'Non COD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">Non-COD</button>
+                                </div>
+                            </template>
                         </div>
                         <div class="relative">
                             <select x-model="selectedCourier" class="w-full light-input text-sm font-bold rounded-xl p-3.5 appearance-none cursor-pointer">
@@ -339,7 +343,7 @@
                                         <div x-show="item.insurance" class="text-[9px] md:text-[10px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-1.5 md:px-2.5 py-0.5 rounded-md mt-0.5 shadow-sm">Asr: <span x-text="formatRupiah(item.insurance)"></span></div>
                                         <div class="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-1.5 mt-1">
                                             <span x-show="item.weight" class="text-[9px] md:text-[10px] text-slate-600 font-bold bg-slate-100 border border-slate-200 px-1.5 md:px-2 py-0.5 rounded-md shadow-sm"><span x-text="item.weight"></span> Kg</span>
-                                            <span class="text-[8px] md:text-[10px] uppercase font-extrabold px-1.5 md:px-2 py-0.5 rounded-md shadow-sm border" :class="item.isCOD ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200'" x-text="item.isCOD ? 'COD' : 'NON-COD'"></span>
+                                            <span class="text-[8px] md:text-[10px] uppercase font-extrabold px-1.5 md:px-2 py-0.5 rounded-md shadow-sm border" :class="(item.paymentType === 'COD' || (!item.paymentType && item.isCOD)) ? 'bg-green-100 text-green-700 border-green-200' : ((item.paymentType === 'Cashless') ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-blue-100 text-blue-700 border-blue-200')" x-text="item.paymentType ? item.paymentType : (item.isCOD ? 'COD' : 'NON-COD')"></span>
                                         </div>
                                     </div>
                                     <div class="text-[9px] md:text-xs text-slate-600 truncate max-w-[80px] md:max-w-[150px] ml-auto font-bold mt-1.5 md:mt-2" x-text="item.receiver || '-'"></div>
@@ -548,7 +552,7 @@
                         <div>
                             <label class="text-[10px] font-extrabold text-slate-500 uppercase mb-2 block">Marketplace</label>
                             <div class="relative">
-                                <select x-model="tempItem.marketplace" class="w-full light-input text-sm font-bold rounded-xl p-3 appearance-none cursor-pointer text-slate-700">
+                                <select x-model="tempItem.marketplace" @change="if(tempItem.marketplace !== 'Manual') tempItem.paymentType = 'Cashless'; else if(tempItem.paymentType === 'Cashless') tempItem.paymentType = 'Non COD';" class="w-full light-input text-sm font-bold rounded-xl p-3 appearance-none cursor-pointer text-slate-700">
                                     <template x-for="mp in marketplaces" :key="mp.name">
                                         <option :value="mp.name" x-text="mp.name"></option>
                                     </template>
@@ -658,9 +662,16 @@
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                     <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                         <label class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Rincian Biaya</label>
-                        <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
-                            <button @click="tempItem.isCOD = true" class="text-[10px] font-bold px-4 py-1.5 rounded-md transition-all" :class="tempItem.isCOD ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">COD</button>
-                            <button @click="tempItem.isCOD = false" class="text-[10px] font-bold px-4 py-1.5 rounded-md transition-all" :class="!tempItem.isCOD ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">NON</button>
+                        <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200 gap-1" style="min-width: 140px;">
+                            <template x-if="tempItem.marketplace !== 'Manual'">
+                                <div class="w-full text-center text-[10px] font-bold px-4 py-1.5 rounded-md bg-white text-slate-800 shadow-sm flex items-center justify-center">CASHLESS</div>
+                            </template>
+                            <template x-if="tempItem.marketplace === 'Manual'">
+                                <div class="flex w-full gap-1">
+                                    <button @click="tempItem.paymentType = 'COD'" class="flex-1 text-[10px] font-bold px-3 py-1.5 rounded-md transition-all" :class="tempItem.paymentType === 'COD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">COD</button>
+                                    <button @click="tempItem.paymentType = 'Non COD'" class="flex-1 text-[10px] font-bold px-3 py-1.5 rounded-md transition-all" :class="tempItem.paymentType === 'Non COD' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">NON</button>
+                                </div>
+                            </template>
                         </div>
                     </div>
                     
@@ -785,7 +796,7 @@
                                 <div class="flex flex-wrap gap-1 md:gap-2 items-center">
                                     <span class="text-[9px] md:text-[10px] bg-slate-100 px-2 py-0.5 rounded-md text-slate-600 font-extrabold border border-slate-200" x-text="item.courier"></span>
                                     <span class="text-[9px] md:text-[10px] bg-amber-50 px-2 py-0.5 rounded-md text-amber-700 font-bold border border-amber-100" x-text="item.marketplace"></span>
-                                    <span class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-md font-extrabold border" :class="item.isCOD ? 'bg-green-50 text-green-700 border-green-200' : 'bg-blue-50 text-blue-700 border-blue-200'" x-text="item.isCOD ? 'COD' : 'NON'"></span>
+                                    <span class="text-[8px] md:text-[9px] px-2 py-0.5 rounded-md font-extrabold border" :class="(item.paymentType === 'COD' || (!item.paymentType && item.isCOD)) ? 'bg-green-50 text-green-700 border-green-200' : ((item.paymentType === 'Cashless') ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')" x-text="item.paymentType ? item.paymentType : (item.isCOD ? 'COD' : 'NON')"></span>
                                 </div>
                             </div>
                         </div>
@@ -977,7 +988,7 @@
                 loginPass: '', isLoading: false, loadingText: 'Menghubungkan...', errorMessage: '',
                 onlineData: [], showQrModal: false, selectedRows: [], barcodeInput: '',
                 isCameraActive: false, html5QrCode: null, showDetailModal: false, showDeleteModal: false, tempItem: {}, scanStatus: 'idle',
-                isCODInput: true, searchQuery: '', activeFilter: 'ALL', filterStatus: 'ALL', isEditMode: false, currentView: 'home',
+                paymentTypeInput: 'Cashless', searchQuery: '', activeFilter: 'ALL', filterStatus: 'ALL', isEditMode: false, currentView: 'home',
                 filterDate: new Date().toLocaleDateString('en-CA'),
                 isBatchMode: false, batchQueue: [], showWarningModal: false, warningMessage: '', pendingScanCode: null,
                 couriers: ['J&T Express', 'JNE Express', 'ID Express', 'Sicepat', 'SPX', 'Lazada Lex', 'Anteraja', 'Ninja', 'J&T Cargo','Lion Parcel (Reg Pack)','Lion Parcel (Jago Pack)', 'SAPX', 'Sentral Cargo', 'Paxel', 'POS Aja'],
@@ -1210,6 +1221,7 @@
                     const rate = this.commissionRates[this.tempItem.courier] || this.commissionRates['Default']; 
                     this.tempItem.profit = Math.round((parseInt(this.tempItem.price) || 0) * rate);
                     this.tempItem.marketplace = String(this.tempItem.marketplace).replace(/ \((Pick Up|Drop Off)\)/gi, "");
+                    this.tempItem.isCOD = (this.tempItem.paymentType === 'COD');
                     
                     try {
                         if(this.tempItem.photoBase64) { this.tempItem.photoUrl = this.tempItem.photoBase64; }
@@ -1352,6 +1364,10 @@
                     this.tempItem = JSON.parse(JSON.stringify(item)); 
                     this.tempItem.photoBase64 = item.photoUrl || null; 
                     if(!this.tempItem.status) this.tempItem.status = 'Normal';
+                    if(!this.tempItem.paymentType) this.tempItem.paymentType = this.tempItem.isCOD ? 'COD' : 'Non COD';
+                    if(this.tempItem.marketplace !== 'Manual' && this.tempItem.paymentType !== 'Cashless' && !this.isEditMode) {
+                        this.tempItem.paymentType = 'Cashless';
+                    }
                     if(!this.tempItem.senderName) this.tempItem.senderName = '';
                     if(!this.tempItem.senderPhone) this.tempItem.senderPhone = '';
                     if(!this.tempItem.receiverPhone) this.tempItem.receiverPhone = '';
@@ -1392,7 +1408,7 @@
                     this.triggerFeedback('success'); this.speakPaket(this.selectedCourier, code);
                     const dateStr = this.getJakartaDateISO(); const d = new Date(); const fullTime = d.toLocaleTimeString('id-ID', {hour12: false}); 
                     const newItem = { 
-                        code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: this.isCODInput, 
+                        code: code, courier: this.selectedCourier, marketplace: this.selectedMp, isCOD: (this.paymentTypeInput === 'COD'), paymentType: this.paymentTypeInput,
                         senderName: '', senderPhone: '', receiver: '', receiverPhone: '', destination: '', weight: '', 
                         price: '', insurance: '', time: fullTime, date: dateStr, admin: this.selectedUser, method: 'Pick Up', status: 'Normal', 
                         photoWeight: null, photoP: null, photoL: null, photoT: null 
@@ -1490,8 +1506,8 @@
                     if (this.filterStatus !== 'ALL') { if (this.filterStatus === 'Normal') { data = data.filter(i => !i.status || i.status === 'Normal'); } else if (this.filterStatus === 'Bermasalah') { data = data.filter(i => i.status === 'Hilang' || i.status === 'Rusak'); } else { data = data.filter(i => i.status === this.filterStatus); } }
                     return data; 
                 },
-                get totalCOD() { return this.filteredData.filter(i => i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
-                get totalNonCOD() { return this.filteredData.filter(i => !i.isCOD).reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
+                get totalCOD() { return this.filteredData.filter(i => i.isCOD || i.paymentType === 'COD').reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
+                get totalNonCOD() { return this.filteredData.filter(i => !i.isCOD && i.paymentType !== 'COD').reduce((acc, curr) => acc + (parseInt(curr.price) || 0), 0); }, 
                 get totalProfit() { return this.filteredData.reduce((acc, curr) => acc + (parseInt(curr.profit) || 0), 0); }, 
                 get scanStatusClass() { return this.scanStatus === 'success' ? 'flash-success' : (this.scanStatus === 'error' ? 'flash-error' : ''); }, 
                 getCourierColor(c) { return 'border-amber-500'; }, 
@@ -1505,7 +1521,7 @@
                 exportExcel() { 
                     const d = this.filteredData; if(d.length===0) return alert("Kosong"); 
                     let c="Tanggal,Hari,Jam,Ekspedisi,Resi,Penerima,Telp Penerima,Pengirim,Telp Pengirim,Tujuan,Tipe,Ongkir,Asuransi,Admin,Status_Paket,Foto\n"; 
-                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.receiverPhone||''}","${r.senderName||''}","${r.senderPhone||''}","${r.destination}",${r.isCOD?'COD':'NON'},${r.price},${r.insurance||0},${r.admin||''},${r.status||'Normal'},${r.photoUrl?'ADA_FOTO':''}\n`}); 
+                    d.forEach(r=>{c+=`${this.formatDateID(r.date)},${r.dayName||'-'},${r.time},${r.courier},${r.code},"${r.receiver}","${r.receiverPhone||''}","${r.senderName||''}","${r.senderPhone||''}","${r.destination}",${r.paymentType ? r.paymentType.toUpperCase() : (r.isCOD?'COD':'NON COD')},${r.price},${r.insurance||0},${r.admin||''},${r.status||'Normal'},${r.photoUrl?'ADA_FOTO':''}\n`}); 
                     const l=document.createElement("a"); l.href="data:text/csv;charset=utf-8,"+encodeURI(c); l.download=`Laporan_${this.filterDate}.csv`; document.body.appendChild(l); l.click(); l.remove(); 
                 },
                 shareToWA() { 
@@ -1556,7 +1572,7 @@
                     if (!data || data.length === 0) return alert("Data tidak ditemukan."); 
                     const tQ = data.length; const timeP = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); 
                     const w = window.open('', '_blank'); 
-                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:100px;}.sign-line{border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%; margin-top: auto;}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}<br><span style="font-size:10px; color:#555">${item.receiverPhone || '-'}</span></td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.isCOD ? 'COD' : '(NON COD)'}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div style="margin: 10px 0; border: 2px solid #b45309; color: #b45309; padding: 4px 12px; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-radius: 4px; display: inline-block; transform: rotate(-5deg);">AUTOKIRIM</div><div class="sign-line">( ${this.selectedUser} )</div></div><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Kurir / Driver</p><div style="height: 50px;"></div><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`); 
+                    w.document.write(`<html><head><title>Manifest ${cn}</title><style>body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;padding:10px;font-size:12px;color:#333;width:100%;box-sizing:border-box}.company-header{text-align:center;margin-bottom:10px}.company-name{font-size:16px;font-weight:bold;margin-bottom:2px;text-transform:uppercase;color:#000}.company-address{font-size:12px;color:#000;margin-bottom:1px}.report-title{text-align:center;margin:10px 0;border-top:2px solid #000;border-bottom:2px solid #000;padding:5px 0}.report-title h2{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px}.report-title h3{margin:2px 0 0;font-size:16px;color:#000;font-weight:800}.meta-info{display:flex;justify-content:space-between;margin-bottom:15px;font-weight:bold;font-size:12px}table{width:100%;border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #000;padding:4px;text-align:left; vertical-align:top;}th{background-color:#f3f4f6;text-transform:uppercase;font-size:11px;font-weight:700;color:#000}td{font-size:12px}.resi-col{font-size:14px;font-weight:900;font-family:monospace}.footer{display:flex;justify-content:space-between;margin-top:30px;gap:10px}.sign-box{text-align:center;width:45%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-height:100px;}.sign-line{border-top:1px solid #000;padding-top:5px;font-size:11px;font-weight:bold;width:100%; margin-top: auto;}.printed-by{text-align:center;font-size:11px;margin-top:20px;font-style:italic;color:#555}</style></head><body><div class="company-header"><div class="company-name">AUTOKIRIM TELUK GONG 2</div><div class="company-address">Jl. Teluk Gong Raya 3 RT.08/RW.10</div><div class="company-address">No Telp. 085760035568</div></div><div class="report-title"><h2>PICKUP MANIFEST</h2><h3>${cn.toUpperCase()}</h3></div><div class="meta-info"><div>${timeP}</div><div>Total: ${tQ}</div></div><table><thead><tr><th style="width: 5%; text-align:center;">No</th><th style="width: 12%">Waktu Scan</th><th style="width: 25%">No. Resi</th><th style="width: 28%">Nama Penerima</th><th style="width: 15%">Market</th><th style="width: 15%">Tipe</th></tr></thead><tbody>${data.map((item, index) => { let cleanMarket = item.marketplace || ''; cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim(); return `<tr><td style="text-align:center">${index + 1}</td><td style="font-size:11px;">${this.formatDateID(item.date)}<br><span style="font-weight:bold; color:#555">${item.time}</span></td><td class="resi-col">${item.code}<br><span style="font-size:10px; color:#555; font-weight:normal">${item.courier}</span></td><td>${item.receiver || '-'}<br><span style="font-size:10px; color:#555">${item.receiverPhone || '-'}</span></td><td>${cleanMarket}<br><span style="font-size:10px; font-weight:bold; color:#444">(${item.method || 'Pick Up'})</span></td><td>${item.paymentType ? item.paymentType.toUpperCase() : (item.isCOD ? 'COD' : '(NON COD)')}</td></tr>`; }).join('')}</tbody></table><div class="footer"><div class="sign-box"><p style="margin-bottom: 5px; font-size: 11px;">Admin / Sender</p><div style="margin: 10px 0; border: 2px solid #b45309; color: #b45309; padding: 4px 12px; font-weight: 900; font-size: 16px; letter-spacing: 2px; border-radius: 4px; display: inline-block; transform: rotate(-5deg);">AUTOKIRIM</div><div class="sign-line">( ${this.selectedUser} )</div></div><div class="sign-box"><p style="margin-bottom: auto; font-size: 11px;">Kurir / Driver</p><div style="height: 50px;"></div><div class="sign-line">( Tanda Tangan )</div></div></div><div class="printed-by">Printed by : ${this.selectedUser}</div><script>setTimeout(function(){ window.print(); }, 1000);</sc` + `ript></body></html>`); 
                     w.document.close(); 
                 },
 
@@ -1622,7 +1638,8 @@
                         const ongkir = parseInt(i.price) || 0;
                         const asuransi = parseInt(i.insurance) || 0;
                         
-                        if (i.isCOD) {
+                        // Treat 'Cashless' and 'Non COD' as NON-COD mathematically in the receipt totals
+                        if (i.paymentType === 'COD' || (!i.paymentType && i.isCOD)) {
                             totalQtyCOD++;
                             totalCodOngkir += ongkir;
                             totalCodAsuransi += asuransi;
@@ -1635,6 +1652,9 @@
                         let cleanMarket = i.marketplace || ''; 
                         cleanMarket = cleanMarket.replace(/ \((Pick Up|Drop Off)\)/gi, "").trim();
                         
+                        let displayType = i.paymentType ? i.paymentType.toUpperCase() : (i.isCOD ? 'COD' : 'NON-COD');
+                        let badgeClass = (i.paymentType === 'COD' || (!i.paymentType && i.isCOD)) ? 'badge-cod' : 'badge-non';
+
                         return `<tr>
                             <td class="text-center">${index + 1}</td>
                             <td>
@@ -1645,7 +1665,7 @@
                             <td>
                                 <div class="font-bold truncate">${i.receiver || '-'}</div>
                                 <div class="text-tiny">📞 ${i.receiverPhone || '-'}</div>
-                                <div class="badge ${i.isCOD ? 'badge-cod' : 'badge-non'}">${i.isCOD ? 'COD' : 'NON-COD'}</div>
+                                <div class="badge ${badgeClass}">${displayType}</div>
                             </td>
                             <td class="text-right">
                                 <div class="font-bold">${this.formatRupiah(ongkir)}</div>
@@ -1747,7 +1767,7 @@
 
                             <div style="display: flex; gap: 4px; margin-bottom: 4px;">
                                 <div class="totals-box" style="flex: 1;">
-                                    <div style="font-size:7px; font-weight:900; text-align:center; border-bottom:1px solid #000; margin-bottom:3px; padding-bottom:2px;">NON-COD (BAYAR SKRG)</div>
+                                    <div style="font-size:7px; font-weight:900; text-align:center; border-bottom:1px solid #000; margin-bottom:3px; padding-bottom:2px;">NON-COD & CASHLESS</div>
                                     <div class="row"><span>Qty:</span><span>${totalQtyNonCOD} Pcs</span></div>
                                     <div class="row"><span>Ongkir:</span><span>${this.formatRupiah(totalNonCodOngkir)}</span></div>
                                     <div class="row"><span>Asuransi:</span><span>${this.formatRupiah(totalNonCodAsuransi)}</span></div>
@@ -1825,8 +1845,9 @@
                     
                     window.courierChart = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(s), datasets: [{ data: Object.values(s), backgroundColor: ['#f59e0b','#d97706','#fbbf24','#3b82f6','#10b981'], borderWidth: 2, borderColor: '#ffffff' }] }, options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#475569', font: {family: "'Plus Jakarta Sans', sans-serif", weight: 'bold'} } } } } }); 
                     
-                    const c = this.filteredData.filter(i=>i.isCOD).length; const n = this.filteredData.length - c; 
-                    window.paymentChart = new Chart(ctx2, { type: 'bar', data: { labels: ['COD','Non-COD'], datasets: [{ label: 'Total Paket', data: [c,n], backgroundColor: ['#10b981','#3b82f6'], borderRadius: 6 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#64748b', font: {weight: 'bold'}, stepSize: 1 }, grid: { color: '#f1f5f9' } }, x: { ticks: { color: '#64748b', font: {weight: 'bold'} }, grid: { display: false } } }, plugins: { legend: { display: false } } } }); 
+                    const c = this.filteredData.filter(i=> i.isCOD || i.paymentType === 'COD').length; 
+                    const n = this.filteredData.length - c; 
+                    window.paymentChart = new Chart(ctx2, { type: 'bar', data: { labels: ['COD','Non-COD/Cashless'], datasets: [{ label: 'Total Paket', data: [c,n], backgroundColor: ['#10b981','#3b82f6'], borderRadius: 6 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: '#64748b', font: {weight: 'bold'}, stepSize: 1 }, grid: { color: '#f1f5f9' } }, x: { ticks: { color: '#64748b', font: {weight: 'bold'} }, grid: { display: false } } }, plugins: { legend: { display: false } } } }); 
                 }
             }
         }
